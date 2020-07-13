@@ -14,14 +14,14 @@ class GoogleDriveInterface:
         self.drive = GoogleDrive(self.drive_auth)
         self.rapid_cloud_directory_id = self.get_rapid_cloud_directory_id()
 
-    def upload_file(self, path_to_export_file="", filename=None):
+    def upload_file(self, filename=None):
         file_to_upload = self.drive.CreateFile({'parents': [{'id': self.rapid_cloud_directory_id}]})
-        file_to_upload.SetContentFile(path_to_export_file + filename)
+        file_to_upload.SetContentFile(filename)
         file_to_upload.Upload()
 
-    def download_file(self, path_to_import_file="", filename=None):
+    def download_file(self, filename=None):
         file_to_download = self.drive.CreateFile({'id': self.get_info_about_file(filename)["file_id"]})
-        file_to_download.GetContentFile(path_to_import_file + filename)
+        file_to_download.GetContentFile(filename)
 
     def get_cloud_provider_data(self):
         data = self.drive.GetAbout()
