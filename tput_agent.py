@@ -31,7 +31,7 @@ class ThroughputTest:
     def run_service_test(self):
         down_link_tput = 20.0 / self.down_link_test()
         up_link_tput = 20.0 / self.up_link_test()
-        os.remove("20MB.zip")
+        os.remove("/tmp/20MB.zip")
         modify_account_parameter(self.account_id, "uplink", up_link_tput)
         modify_account_parameter(self.account_id, "downlink", down_link_tput)
 

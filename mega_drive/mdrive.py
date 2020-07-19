@@ -14,11 +14,11 @@ class MegaCloudInterface:
 
     def upload_file(self, filename=None):
         folder = self.drive.find('RAPIDCLOUD')
-        self.drive.upload(filename, folder[0])
+        self.drive.upload("/tmp/{}".format(filename), folder[0], filename)
 
     def download_file(self, filename=None):
         file_to_download = self.drive.find(filename)
-        self.drive.download(file_to_download)
+        self.drive.download(file_to_download, "/tmp")
 
     def get_cloud_provider_data(self):
         data = self.drive.get_storage_space(kilo=True)
