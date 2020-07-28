@@ -1,9 +1,9 @@
 import time
 from mega import Mega
-from configuration_handler import get_mega_cloud_credentials
+from configuration_handler import ConfigurationHandler
 
 
-class MegaCloudInterface:
+class MegaCloudInterface(ConfigurationHandler):
 
     def __init__(self, account_id=None):
         self.timestamp = time.time()
@@ -11,6 +11,7 @@ class MegaCloudInterface:
         self.drive = None
         self.authorization()
         self.create_rapid_cloud_directory_if_not_exists()
+        super().__init__(account_id, "megacloud")
 
     def upload_file(self, filename=None):
         folder = self.drive.find('RAPIDCLOUD')
@@ -50,5 +51,5 @@ class MegaCloudInterface:
 
     def authorization(self):
         mega = Mega()
-        credentials = get_mega_cloud_credentials(self.account_id)
+        credentials = self.get_mega_cloud_credentials()
         self.drive = mega.login(credentials[0], credentials[1])

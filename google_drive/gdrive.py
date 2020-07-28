@@ -1,10 +1,10 @@
 import time
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
-from configuration_handler import enter_new_account, check_if_account_exist
+from configuration_handler import ConfigurationHandler
 
 
-class GoogleDriveInterface:
+class GoogleDriveInterface(ConfigurationHandler):
 
     def __init__(self, account_id=None):
         self.timestamp = time.time()
@@ -13,6 +13,7 @@ class GoogleDriveInterface:
         self.authorization()
         self.drive = GoogleDrive(self.drive_auth)
         self.rapid_cloud_directory_id = self.get_rapid_cloud_directory_id()
+        super().__init__(account_id, "google")
 
     def upload_file(self, filename=None):
         file_to_upload = self.drive.CreateFile({'parents': [{'id': self.rapid_cloud_directory_id}], "title": filename})
@@ -56,11 +57,11 @@ class GoogleDriveInterface:
             return self.get_info_about_file("RAPIDCLOUD")["file_id"]
 
     def authorization(self):
-        if check_if_account_exist(self.account_id, "google"):
+        if self.check_if_account_exist():
             self.drive_auth.LoadCredentialsFile("google_drive/mycreds_{}.txt".format(self.account_id))
         if self.drive_auth.credentials is None:
             self.drive_auth.LocalWebserverAuth()
-            self.account_id = enter_new_account("google")
+            self.account_id = self.enter_new_account()
         elif self.drive_auth.access_token_expired:
             print("Refreshing api token ...")
             self.drive_auth.Refresh()
