@@ -6,12 +6,11 @@ from configuration_handler import ConfigurationHandler
 class MegaCloudInterface(ConfigurationHandler):
 
     def __init__(self, account_id=None):
+        super().__init__(account_id, "megacloud")
         self.timestamp = time.time()
-        self.account_id = account_id
         self.drive = None
         self.authorization()
         self.create_rapid_cloud_directory_if_not_exists()
-        super().__init__(account_id, "megacloud")
 
     def upload_file(self, filename=None):
         folder = self.drive.find('RAPIDCLOUD')

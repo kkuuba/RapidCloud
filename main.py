@@ -86,6 +86,7 @@ class RapidCloudTaskHandler(ConfigurationHandler):
                     break
             if self.transfer_finished:
                 break
+            time.sleep(2)
 
     def upload_all_fragments(self, new_filename):
         providers_data = self.get_data_from_json()
@@ -138,5 +139,7 @@ class UnitDataTransferTask:
             return MegaCloudInterface(self.provider_id)
 
 
-obj = RapidCloudTaskHandler("20MB.zip.rp")
+# obj1 = GoogleDriveInterface()
+# obj2 = GoogleDriveInterface()
+obj = RapidCloudTaskHandler("100MB.zip.rp")
 obj.import_file_from_cloud()

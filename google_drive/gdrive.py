@@ -7,13 +7,12 @@ from configuration_handler import ConfigurationHandler
 class GoogleDriveInterface(ConfigurationHandler):
 
     def __init__(self, account_id=None):
+        super().__init__(account_id, "google")
         self.timestamp = time.time()
-        self.account_id = account_id
         self.drive_auth = GoogleAuth()
         self.authorization()
         self.drive = GoogleDrive(self.drive_auth)
         self.rapid_cloud_directory_id = self.get_rapid_cloud_directory_id()
-        super().__init__(account_id, "google")
 
     def upload_file(self, filename=None):
         file_to_upload = self.drive.CreateFile({'parents': [{'id': self.rapid_cloud_directory_id}], "title": filename})

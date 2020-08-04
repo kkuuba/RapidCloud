@@ -32,14 +32,14 @@ class ConfigurationHandler:
             account_id = data["cloud_providers"][-1]["account_id"] + 1
         else:
             account_id = 1
-            account_info = {
-                "provider": self.provider,
-                "account_id": account_id
-            }
-            data["cloud_providers"].append(account_info)
+        account_info = {
+            "provider": self.provider,
+            "account_id": account_id
+        }
+        data["cloud_providers"].append(account_info)
 
-            self.put_data_in_json(data)
-            print("Added new account")
+        self.put_data_in_json(data)
+        print("Added new account")
         return account_id
 
     def modify_account_parameter(self, parameter, value):
