@@ -2,6 +2,7 @@ from file_split_merge import SplitAndCombineFiles
 from google_drive.gdrive import GoogleDriveInterface
 from mega_drive.mdrive import MegaCloudInterface
 from configuration_handler import ConfigurationHandler
+from utilities import UnitDataTransferTask, FileEncryption
 import threading
 import hashlib
 import os
@@ -11,7 +12,10 @@ import json
 
 
 class RapidCloudTaskHandler(ConfigurationHandler):
-    def __init__(self, path_to_task_object):
+    def __init__(self, path_to_task_object, password):
+        self.file_operation = SplitAndCombineFiles()
+        self.encryption_key = password
+        self.file_encryption = FileEncryption(path_to_task_object, self.encryption_key)
         self.path = path_to_task_object
         self.start = str(time.time())
         self.progress = None
@@ -40,27 +44,25 @@ class RapidCloudTaskHandler(ConfigurationHandler):
 
     def export_file_to_cloud(self):
         file_name = self.path.split("/")[-1]
-        file_operation = SplitAndCombineFiles()
-        os.popen("cp {} {}".format(self.path, "/tmp/"))
+        self.file_encryption.prepare_file_to_export()
         new_name = self.generate_fragment_hash_string()
-        os.popen("mv /tmp/{} /tmp/{}".format(file_name, new_name))
+        os.popen("mv /tmp/{} /tmp/{}".format("{}.zip".format(file_name.split(".")[0]), new_name))
         time.sleep(3)
         divide_scheme = self.get_proper_file_divide_scheme()
         print(divide_scheme)
-        file_operation.split("/tmp/{}".format(new_name), divide_scheme)
+        self.file_operation.split("/tmp/{}".format(new_name), divide_scheme)
         self.upload_all_fragments(new_name)
         self.wait_for_transfer_off_all_fragments()
         self.delete_temp_files(new_name)
+        self.delete_temp_files("aes")
         self.create_original_file_trace(file_name)
 
     def create_original_file_trace(self, original_file_name):
-        file = open("{}.rp".format(original_file_name), "w")
+        file = open("{}.rp".format(original_file_name.split(".")[0]), "w")
         file.write(json.dumps(self.file_trace))
         file.close()
 
     def import_file_from_cloud(self):
-        file_name = self.path.split("/")[-1]
-        file_operation = SplitAndCombineFiles()
         file = open(self.path, mode='r')
         self.file_trace = json.loads(file.read())
         keys_list = list(self.file_trace.keys())
@@ -72,10 +74,11 @@ class RapidCloudTaskHandler(ConfigurationHandler):
             self.threads[-1].start()
         self.wait_for_transfer_off_all_fragments()
         hash_name = keys_list[-1].split("-")[0]
-        file_operation.merge("/tmp/{}.zip".format(keys_list[-1]).split("-")[0])
-        os.popen("cp {} {}".format("/tmp/{}".format(hash_name), "."))
-        os.popen("mv {} {}".format(hash_name, "{}.{}".format(file_name.split(".")[0], file_name.split(".")[1])))
+        self.file_operation.merge("/tmp/{}.zip".format(keys_list[-1]).split("-")[0])
+        self.file_encryption = FileEncryption(hash_name, self.encryption_key)
+        self.file_encryption.prepare_file_after_import()
         self.delete_temp_files(hash_name)
+        self.delete_temp_files("aes")
 
     def wait_for_transfer_off_all_fragments(self):
         while True:
@@ -113,33 +116,7 @@ class RapidCloudTaskHandler(ConfigurationHandler):
                 os.remove(os.path.join(root, file))
 
 
-class UnitDataTransferTask:
-    def __init__(self, filename, provider_id, provider):
-        self.filename = filename
-        self.provider_id = provider_id
-        self.provider_instance = self.recognize_provider(provider)
-        self.finish = False
-
-    def export_fragment(self):
-        print("Starting export '{}' file".format(self.filename))
-        self.provider_instance.upload_file(self.filename)
-        print("File '{}' exported with success".format(self.filename))
-        self.finish = True
-
-    def import_fragment(self):
-        print("Starting import of '{}' file".format(self.filename))
-        self.provider_instance.download_file(self.filename)
-        print("File '{}' imported with success".format(self.filename))
-        self.finish = True
-
-    def recognize_provider(self, provider):
-        if provider == "google":
-            return GoogleDriveInterface(self.provider_id)
-        elif provider == "megacloud":
-            return MegaCloudInterface(self.provider_id)
-
-
 # obj1 = GoogleDriveInterface()
 # obj2 = GoogleDriveInterface()
-obj = RapidCloudTaskHandler("100MB.zip.rp")
+obj = RapidCloudTaskHandler("TRA3106.rp", "passwd")
 obj.import_file_from_cloud()
