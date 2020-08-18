@@ -3,6 +3,7 @@ from google_drive.gdrive import GoogleDriveInterface
 from mega_drive.mdrive import MegaCloudInterface
 from configuration_handler import ConfigurationHandler
 from utilities import UnitDataTransferTask, FileEncryption
+import argparse
 import threading
 import hashlib
 import os
@@ -116,7 +117,60 @@ class RapidCloudTaskHandler(ConfigurationHandler):
                 os.remove(os.path.join(root, file))
 
 
-# obj1 = GoogleDriveInterface()
-# obj2 = GoogleDriveInterface()
-obj = RapidCloudTaskHandler("TRA3106.rp", "passwd")
-obj.import_file_from_cloud()
+def log(value):
+    """ This is just a print method"""
+    print(value)
+
+
+def check_if_providers_defined():
+    with open("configuration.json", "r") as file:
+        data = json.load(file)
+        file.close()
+    if data["cloud_providers"]:
+        return True
+    else:
+        return False
+
+
+def prepare_all_accounts():
+    if not check_if_providers_defined():
+        while True:
+            log("Please enter cloud provider name [google, megacloud]:")
+            provider = str(input())
+            if provider == "google":
+                GoogleDriveInterface()
+            elif provider == "megacloud":
+                MegaCloudInterface()
+            else:
+                log("Unknown provider\n")
+                continue
+            log("Do you want to add another account? [yes/no]")
+            end_preparation = str(input()) == "no"
+            if end_preparation:
+                break
+
+
+def main():
+    try:
+        parser = argparse.ArgumentParser(description='Export or import file to cloud storage')
+        parser.add_argument('filename')
+        prepare_all_accounts()
+        args = parser.parse_args()
+        is_valid_file = os.path.exists(args.filename)
+        if args.filename.split(".")[-1] == "rp" and is_valid_file:
+            transfer_obj = RapidCloudTaskHandler(args.filename, password="secret")
+            transfer_obj.import_file_from_cloud()
+
+        elif args.filename and is_valid_file:
+            transfer_obj = RapidCloudTaskHandler(args.filename, password="secret")
+            transfer_obj.export_file_to_cloud()
+
+        else:
+            log("No proper file provided")
+    except KeyboardInterrupt:
+        log("Execution interrupted\n")
+        exit()
+
+
+if __name__ == "__main__":
+    main()
