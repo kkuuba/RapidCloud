@@ -43,7 +43,7 @@ class ConfigurationHandler:
         return account_id
 
     def modify_account_parameter(self, parameter, value):
-        data = self.get_data_from_json()
+        data = json.load(open("configuration.json", "r"))
         for account in data["cloud_providers"]:
             if account["account_id"] == self.account_id:
                 account[parameter] = value
