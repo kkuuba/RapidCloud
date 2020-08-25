@@ -10,6 +10,7 @@ import os
 import re
 import time
 import json
+import getpass
 
 
 class RapidCloudTaskHandler(ConfigurationHandler):
@@ -123,17 +124,42 @@ def log(value):
 
 
 def check_if_providers_defined():
-    with open("configuration.json", "r") as file:
-        data = json.load(file)
-        file.close()
-    if data["cloud_providers"]:
-        return True
-    else:
+    try:
+        user_name = getpass.getuser()
+        with open("/home/{}/.config/rapid_cloud_data/configuration.json".format(user_name), "r") as file:
+            data = json.load(file)
+            file.close()
+        if data["cloud_providers"]:
+            return True
+        else:
+            return False
+    except FileNotFoundError:
         return False
+
+
+def set_default_configuration_scheme():
+    user_name = getpass.getuser()
+    os.mkdir(path="/home/{}/.config/rapid_cloud_data".format(user_name))
+    os.mkdir(path="/home/{}/.config/rapid_cloud_data/google_drive".format(user_name))
+    with open("/home/{}/.config/rapid_cloud_data/configuration.json".format(user_name), "w+") as file:
+        file.write("""{"cloud_providers": []}""")
+        file.close()
+    with open("/home/{}/.config/rapid_cloud_data/google_drive/client_secrets.json".format(user_name), "w+") as file:
+        file.write(
+            """{"installed": {"client_id": "894311503588-qi4p4ld3fng02a0c8j0mfvk656a4698t.apps.googleusercontent.com",
+                               "project_id": "quickstart-1583352235400",
+                               "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                               "token_uri": "https://oauth2.googleapis.com/token",
+                               "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                               "client_secret": "hSJvUATRj3p-s7bY1iXxZWkm",
+                               "redirect_uris": ["urn:ietf:wg:oauth:2.0:oob", "http://localhost"]}}"""
+        )
+        file.close()
 
 
 def prepare_all_accounts():
     if not check_if_providers_defined():
+        set_default_configuration_scheme()
         while True:
             log("Please enter cloud provider name [google, megacloud]:")
             provider = str(input())

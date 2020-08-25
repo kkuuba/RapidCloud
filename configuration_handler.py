@@ -1,14 +1,15 @@
 import json
-from getpass import getpass
+from getpass import getpass, getuser
 
 
 class ConfigurationHandler:
     def __init__(self, account_identifier=None, provider=None):
         self.account_id = account_identifier
         self.provider = provider
+        self.user_name = getuser()
 
     def get_data_from_json(self):
-        with open("configuration.json", "r") as file:
+        with open("/home/{}/.config/rapid_cloud_data/configuration.json".format(self.user_name), "r") as file:
             if self.account_id:
                 for account in json.load(file)["cloud_providers"]:
                     if account["account_id"] == self.account_id:
@@ -19,9 +20,8 @@ class ConfigurationHandler:
                 file.close()
                 return data
 
-    @staticmethod
-    def put_data_in_json(data):
-        with open("configuration.json", "w") as file:
+    def put_data_in_json(self, data):
+        with open("/home/{}/.config/rapid_cloud_data/configuration.json".format(self.user_name), "w") as file:
             file.seek(0)
             json.dump(data, file)
             file.close()
@@ -43,7 +43,7 @@ class ConfigurationHandler:
         return account_id
 
     def modify_account_parameter(self, parameter, value):
-        data = json.load(open("configuration.json", "r"))
+        data = json.load(open("/home/{}/.config/rapid_cloud_data/configuration.json".format(self.user_name), "r"))
         for account in data["cloud_providers"]:
             if account["account_id"] == self.account_id:
                 account[parameter] = value

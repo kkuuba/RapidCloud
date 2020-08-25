@@ -9,6 +9,9 @@ class GoogleDriveInterface(ConfigurationHandler):
     def __init__(self, account_id=None):
         super().__init__(account_id, "google")
         self.timestamp = time.time()
+        GoogleAuth.DEFAULT_SETTINGS[
+            'client_config_file'] = "/home/{}/.config/rapid_cloud_data/google_drive/client_secrets.json".format(
+            self.user_name)
         self.drive_auth = GoogleAuth()
         self.authorization()
         self.drive = GoogleDrive(self.drive_auth)
@@ -57,7 +60,8 @@ class GoogleDriveInterface(ConfigurationHandler):
 
     def authorization(self):
         if self.check_if_account_exist():
-            self.drive_auth.LoadCredentialsFile("google_drive/mycreds_{}.txt".format(self.account_id))
+            self.drive_auth.LoadCredentialsFile(
+                "/home/{}/.config/rapid_cloud_data/google_drive/mycreds_{}.txt".format(self.user_name, self.account_id))
         if self.drive_auth.credentials is None:
             self.drive_auth.LocalWebserverAuth()
             self.account_id = self.enter_new_account()
@@ -66,4 +70,5 @@ class GoogleDriveInterface(ConfigurationHandler):
             self.drive_auth.Refresh()
         else:
             self.drive_auth.Authorize()
-        self.drive_auth.SaveCredentialsFile("google_drive/mycreds_{}.txt".format(self.account_id))
+        self.drive_auth.SaveCredentialsFile(
+            "/home/{}/.config/rapid_cloud_data/google_drive/mycreds_{}.txt".format(self.user_name, self.account_id))
