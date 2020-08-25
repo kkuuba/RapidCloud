@@ -1,0 +1,4 @@
+setuptools
+PyDrive
+pyAesCrypt
+dropbox
