@@ -1,8 +1,6 @@
 from file_split_merge import SplitAndCombineFiles
-from google_drive.gdrive import GoogleDriveInterface
-from mega_drive.mdrive import MegaCloudInterface
 from configuration_handler import ConfigurationHandler
-from utilities import UnitDataTransferTask, FileEncryption
+from utilities import *
 import argparse
 import threading
 import hashlib
@@ -10,13 +8,13 @@ import os
 import re
 import time
 import json
-import getpass
 
 
 class RapidCloudTaskHandler(ConfigurationHandler):
-    def __init__(self, path_to_task_object, password):
+    def __init__(self, path_to_task_object):
+        super().__init__()
         self.file_operation = SplitAndCombineFiles()
-        self.encryption_key = password
+        self.encryption_key = self.get_rapid_cloud_password()
         self.file_encryption = FileEncryption(path_to_task_object, self.encryption_key)
         self.path = path_to_task_object
         self.start = str(time.time())
@@ -27,7 +25,6 @@ class RapidCloudTaskHandler(ConfigurationHandler):
         self.threads = []
         self.transfer_finished = False
         self.file_trace = {}
-        super().__init__()
 
     def get_proper_file_divide_scheme(self):
         """
@@ -63,6 +60,11 @@ class RapidCloudTaskHandler(ConfigurationHandler):
         file = open("{}.rp".format(original_file_name.split(".")[0]), "w")
         file.write(json.dumps(self.file_trace))
         file.close()
+        back_up_trace_file = open(
+            "/home/{}/.config/rapid_cloud_data/exported_files/{}.rp".format(user_name,
+                                                                            original_file_name.split(".")[0]), "w")
+        back_up_trace_file.write(json.dumps(self.file_trace))
+        back_up_trace_file.close()
 
     def import_file_from_cloud(self):
         file = open(self.path, mode='r')
@@ -118,79 +120,33 @@ class RapidCloudTaskHandler(ConfigurationHandler):
                 os.remove(os.path.join(root, file))
 
 
-def log(value):
-    """ This is just a print method"""
-    print(value)
-
-
-def check_if_providers_defined():
-    try:
-        user_name = getpass.getuser()
-        with open("/home/{}/.config/rapid_cloud_data/configuration.json".format(user_name), "r") as file:
-            data = json.load(file)
-            file.close()
-        if data["cloud_providers"]:
-            return True
-        else:
-            return False
-    except FileNotFoundError:
-        return False
-
-
-def set_default_configuration_scheme():
-    user_name = getpass.getuser()
-    os.mkdir(path="/home/{}/.config/rapid_cloud_data".format(user_name))
-    os.mkdir(path="/home/{}/.config/rapid_cloud_data/google_drive".format(user_name))
-    with open("/home/{}/.config/rapid_cloud_data/configuration.json".format(user_name), "w+") as file:
-        file.write("""{"cloud_providers": []}""")
-        file.close()
-    with open("/home/{}/.config/rapid_cloud_data/google_drive/client_secrets.json".format(user_name), "w+") as file:
-        file.write(
-            """{"installed": {"client_id": "894311503588-qi4p4ld3fng02a0c8j0mfvk656a4698t.apps.googleusercontent.com",
-                               "project_id": "quickstart-1583352235400",
-                               "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                               "token_uri": "https://oauth2.googleapis.com/token",
-                               "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-                               "client_secret": "hSJvUATRj3p-s7bY1iXxZWkm",
-                               "redirect_uris": ["urn:ietf:wg:oauth:2.0:oob", "http://localhost"]}}"""
-        )
-        file.close()
-
-
-def prepare_all_accounts():
-    if not check_if_providers_defined():
-        set_default_configuration_scheme()
-        while True:
-            log("Please enter cloud provider name [google, megacloud]:")
-            provider = str(input())
-            if provider == "google":
-                GoogleDriveInterface()
-            elif provider == "megacloud":
-                MegaCloudInterface()
-            else:
-                log("Unknown provider\n")
-                continue
-            log("Do you want to add another account? [yes/no]")
-            end_preparation = str(input()) == "no"
-            if end_preparation:
-                break
-
-
 def main():
     try:
-        parser = argparse.ArgumentParser(description='Export or import file to cloud storage')
-        parser.add_argument('filename')
+        parser = argparse.ArgumentParser(
+            description='Export or import file to or from multiple cloud storage providers')
+        parser.add_argument('filename', nargs='?', default="none",
+                            help="Provide the File that needs to be exported or imported")
+        parser.add_argument('-r', '--reset_configuration', action='store_true',
+                            help="Wipe out actual accounts configuration")
+        parser.add_argument('-S', '--show_cloud_files', action='store_true',
+                            help="Show all files exported to cloud")
+        parser.add_argument('-p', '--show_cloud_parameters', action='store_true',
+                            help="Show all cloud providers parameters")
         prepare_all_accounts()
         args = parser.parse_args()
         is_valid_file = os.path.exists(args.filename)
         if args.filename.split(".")[-1] == "rp" and is_valid_file:
-            transfer_obj = RapidCloudTaskHandler(args.filename, password="secret")
+            transfer_obj = RapidCloudTaskHandler(args.filename)
             transfer_obj.import_file_from_cloud()
-
         elif args.filename and is_valid_file:
-            transfer_obj = RapidCloudTaskHandler(args.filename, password="secret")
+            transfer_obj = RapidCloudTaskHandler(args.filename)
             transfer_obj.export_file_to_cloud()
-
+        elif args.reset_configuration:
+            reset_configuration()
+        elif args.show_cloud_files:
+            show_cloud_files()
+        elif args.show_cloud_parameters:
+            show_cloud_parameters()
         else:
             log("No proper file provided")
     except KeyboardInterrupt:

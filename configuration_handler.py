@@ -26,6 +26,13 @@ class ConfigurationHandler:
             json.dump(data, file)
             file.close()
 
+    def get_rapid_cloud_password(self):
+        with open("/home/{}/.config/rapid_cloud_data/configuration.json".format(self.user_name), "r") as file:
+            file.seek(0)
+            password = json.load(file)["password"]
+            file.close()
+            return password
+
     def enter_new_account(self):
         data = self.get_data_from_json()
         if data["cloud_providers"]:
