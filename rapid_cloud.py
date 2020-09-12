@@ -32,11 +32,19 @@ class RapidCloudTaskHandler(ConfigurationHandler):
 
         :return:
         """
-        providers_count = len(self.get_data_from_json()["cloud_providers"])
-        if providers_count == 0:
-            GoogleDriveInterface()
-            MegaCloudInterface()
-        return str(len(self.get_data_from_json()["cloud_providers"]))
+        providers_data = self.get_data_from_json()["cloud_providers"]
+        number = sum(item["uplink"] for item in providers_data)
+        print(number)
+        divide_data_scheme = {}
+        next_frag_id = 1
+        for provider_id in range(len(providers_data)):
+            assigned_fragments = int(round((providers_data[provider_id]["uplink"] / number) * 20))
+            print(assigned_fragments)
+            divide_data_scheme.update(
+                {str(provider_id + 1): list(range(next_frag_id, next_frag_id + assigned_fragments))})
+            next_frag_id = assigned_fragments + 1
+
+        return divide_data_scheme
 
     def generate_fragment_hash_string(self):
         return str(hashlib.sha256(self.start.encode("utf-8")).hexdigest())
@@ -48,9 +56,8 @@ class RapidCloudTaskHandler(ConfigurationHandler):
         os.popen("mv /tmp/{} /tmp/{}".format("{}.zip".format(file_name.split(".")[0]), new_name))
         time.sleep(3)
         divide_scheme = self.get_proper_file_divide_scheme()
-        print(divide_scheme)
-        self.file_operation.split("/tmp/{}".format(new_name), divide_scheme)
-        self.upload_all_fragments(new_name)
+        self.file_operation.split("/tmp/{}".format(new_name), str(20))
+        self.upload_all_fragments(new_name, divide_scheme)
         self.wait_for_transfer_off_all_fragments()
         self.delete_temp_files(new_name)
         self.delete_temp_files("aes")
@@ -95,22 +102,26 @@ class RapidCloudTaskHandler(ConfigurationHandler):
                 break
             time.sleep(2)
 
-    def upload_all_fragments(self, new_filename):
+    def upload_all_fragments(self, new_filename, divide_data_scheme):
         providers_data = self.get_data_from_json()
         UnitDataTransferTask("{}-{}.ros".format(new_filename, "CRC"), 1,
                              providers_data["cloud_providers"][0]["provider"]).export_fragment()
         self.file_trace.update({
             "{}-{}.ros".format(new_filename, "CRC"): providers_data["cloud_providers"][0]
         })
-        for x in providers_data["cloud_providers"]:
-            self.file_trace.update({
-                "{}-{}.ros".format(new_filename, x["account_id"]): x
-            })
-            self.tasks.append(UnitDataTransferTask("{}-{}.ros".format(new_filename, x["account_id"]), x["account_id"],
-                                                   x["provider"]))
-            self.threads.append(threading.Thread(target=self.tasks[-1].export_fragment, args=()))
-            self.threads[-1].daemon = True
-            self.threads[-1].start()
+        print(divide_data_scheme)
+        for provider in divide_data_scheme:
+            for fragment_id in divide_data_scheme[provider]:
+                print(fragment_id)
+                self.file_trace.update({
+                    "{}-{}.ros".format(new_filename, fragment_id): providers_data["cloud_providers"][int(provider) - 1]
+                })
+                self.tasks.append(
+                    UnitDataTransferTask("{}-{}.ros".format(new_filename, fragment_id), int(provider),
+                                         providers_data["cloud_providers"][int(provider) - 1]["provider"]))
+                self.threads.append(threading.Thread(target=self.tasks[-1].export_fragment, args=()))
+                self.threads[-1].daemon = True
+                self.threads[-1].start()
 
     @staticmethod
     def delete_temp_files(filename):
