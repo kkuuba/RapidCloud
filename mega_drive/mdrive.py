@@ -44,6 +44,11 @@ class MegaCloudInterface(ConfigurationHandler):
         else:
             return None
 
+    def delete_file(self, filename):
+        file = self.drive.find(filename)
+        self.drive.delete(file[0])
+        self.drive.empty_trash()
+
     def create_rapid_cloud_directory_if_not_exists(self):
         if not self.drive.find('RAPIDCLOUD'):
             self.drive.create_folder('RAPIDCLOUD')

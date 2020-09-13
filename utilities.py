@@ -16,13 +16,14 @@ user_name = getuser()
 
 
 class UnitDataTransferTask:
-    def __init__(self, filename, provider_id, provider):
+    def __init__(self, filename, provider_id, provider, performance_test=False):
         self.filename = filename
         self.provider_id = provider_id
         self.provider_instance = self.recognize_provider(provider)
         self.finish = False
         self.start_time = time.time()
         self.transfer_duration = 0
+        self.performance_test = performance_test
 
     def export_fragment(self):
         print("Starting export '{}' file".format(self.filename))
@@ -30,6 +31,8 @@ class UnitDataTransferTask:
         print("File '{}' exported with success".format(self.filename))
         self.transfer_duration = time.time() - self.start_time
         self.finish = True
+        if self.performance_test:
+            self.provider_instance.delete_file(self.filename)
 
     def import_fragment(self):
         print("Starting import of '{}' file".format(self.filename))
@@ -72,7 +75,7 @@ class ThroughputTest:
             with open("/tmp/{}".format(test_file_name), 'wb') as file_1:
                 file_1.write(os.urandom(1024 * start_data_size))
                 file_1.close()
-            transfer_task = UnitDataTransferTask(test_file_name, self.account_id, self.provider)
+            transfer_task = UnitDataTransferTask(test_file_name, self.account_id, self.provider, True)
             transfer_task.export_fragment()
             subtest_result.update({test_file_name: 1024 * start_data_size / transfer_task.transfer_duration})
             if time.time() - subtest_start > tp:
@@ -130,7 +133,9 @@ def check_provider_performance(provider_id, n=3):
         threads.append(threading.Thread(target=tasks[-1].up_link_sub_test, args=[k]))
         threads[-1].daemon = True
         threads[-1].start()
-    time.sleep(20)
+    while not all(test.up_link_speed for test in tasks):
+        time.sleep(2)
+        print("...")
     account_config.modify_account_parameter("up_link", sum(test.up_link_speed for test in tasks) / n)
     ThroughputTest.delete_test_files()
 

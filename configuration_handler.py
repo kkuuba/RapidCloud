@@ -58,8 +58,7 @@ class ConfigurationHandler:
         print("Parameter of account {} changed successfully".format(self.account_id))
 
     def check_if_account_exist(self):
-        account = self.get_data_from_json()
-        if account:
+        if self.account_id:
             return True
         else:
             return False
