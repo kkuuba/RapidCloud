@@ -1,12 +1,16 @@
 from google_drive.gdrive import GoogleDriveInterface
 from mega_drive.mdrive import MegaCloudInterface
+from configuration_handler import ConfigurationHandler
+from getpass import getpass, getuser
 from zipfile import ZipFile
 from os.path import basename
 import pyAesCrypt
+import threading
 import os
+import re
 import json
-from getpass import getpass, getuser
 import shutil
+import time
 
 user_name = getuser()
 
@@ -17,17 +21,21 @@ class UnitDataTransferTask:
         self.provider_id = provider_id
         self.provider_instance = self.recognize_provider(provider)
         self.finish = False
+        self.start_time = time.time()
+        self.transfer_duration = 0
 
     def export_fragment(self):
         print("Starting export '{}' file".format(self.filename))
         self.provider_instance.upload_file(self.filename)
         print("File '{}' exported with success".format(self.filename))
+        self.transfer_duration = time.time() - self.start_time
         self.finish = True
 
     def import_fragment(self):
         print("Starting import of '{}' file".format(self.filename))
         self.provider_instance.download_file(self.filename)
         print("File '{}' imported with success".format(self.filename))
+        self.transfer_duration = time.time() - self.start_time
         self.finish = True
 
     def recognize_provider(self, provider):
@@ -35,6 +43,41 @@ class UnitDataTransferTask:
             return GoogleDriveInterface(self.provider_id)
         elif provider == "megacloud":
             return MegaCloudInterface(self.provider_id)
+
+
+class ThroughputTest:
+    def __init__(self, account_id):
+        self.configuration_handler = ConfigurationHandler(account_id)
+        self.account_id = account_id
+        self.provider = self.create_cloud_provider_instance()
+        self.up_link_speed = None
+
+    def create_cloud_provider_instance(self):
+        return self.configuration_handler.get_data_from_json()["provider"]
+
+    @staticmethod
+    def delete_test_files():
+        pattern = re.compile(r"{}*.".format("test"))
+        for root, dirs, files in os.walk("/tmp"):
+            for file in filter(lambda x: re.match(pattern, x), files):
+                os.remove(os.path.join(root, file))
+
+    def up_link_sub_test(self, sub_test_id, tp=14):
+        subtest_start = time.time()
+        subtest_result = {}
+        start_data_size = 2
+        while True:
+            start_data_size = start_data_size * 2
+            test_file_name = "test_{}_{}K".format(str(sub_test_id), str(start_data_size))
+            with open("/tmp/{}".format(test_file_name), 'wb') as file_1:
+                file_1.write(os.urandom(1024 * start_data_size))
+                file_1.close()
+            transfer_task = UnitDataTransferTask(test_file_name, self.account_id, self.provider)
+            transfer_task.export_fragment()
+            subtest_result.update({test_file_name: 1024 * start_data_size / transfer_task.transfer_duration})
+            if time.time() - subtest_start > tp:
+                break
+        self.up_link_speed = sum(subtest_result.values()) / len(subtest_result.keys())
 
 
 class FileEncryption:
@@ -76,6 +119,27 @@ class FileEncryption:
 def log(value):
     """ This is just a print method"""
     print(value)
+
+
+def check_provider_performance(provider_id, n=3):
+    account_config = ConfigurationHandler(provider_id)
+    tasks = []
+    threads = []
+    for k in range(n):
+        tasks.append(ThroughputTest(provider_id))
+        threads.append(threading.Thread(target=tasks[-1].up_link_sub_test, args=[k]))
+        threads[-1].daemon = True
+        threads[-1].start()
+    time.sleep(20)
+    account_config.modify_account_parameter("up_link", sum(test.up_link_speed for test in tasks) / n)
+    ThroughputTest.delete_test_files()
+
+
+def check_performance():
+    configuration_handler = ConfigurationHandler()
+    info = configuration_handler.get_data_from_json()
+    for account in info["cloud_providers"]:
+        check_provider_performance(account["account_id"])
 
 
 def check_if_providers_defined():
@@ -129,6 +193,7 @@ def prepare_all_accounts():
             end_preparation = str(input()) == "no"
             if end_preparation:
                 break
+        check_performance()
 
 
 def setup_password():

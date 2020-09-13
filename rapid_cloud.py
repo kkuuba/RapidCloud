@@ -1,5 +1,4 @@
 from file_split_merge import SplitAndCombineFiles
-from configuration_handler import ConfigurationHandler
 from utilities import *
 import argparse
 import threading
@@ -33,12 +32,12 @@ class RapidCloudTaskHandler(ConfigurationHandler):
         :return:
         """
         providers_data = self.get_data_from_json()["cloud_providers"]
-        number = sum(item["uplink"] for item in providers_data)
+        number = sum(item["up_link"] for item in providers_data)
         print(number)
         divide_data_scheme = {}
         next_frag_id = 1
         for provider_id in range(len(providers_data)):
-            assigned_fragments = int(round((providers_data[provider_id]["uplink"] / number) * 20))
+            assigned_fragments = int(round((providers_data[provider_id]["up_link"] / number) * 20))
             print(assigned_fragments)
             divide_data_scheme.update(
                 {str(provider_id + 1): list(range(next_frag_id, next_frag_id + assigned_fragments))})
@@ -112,7 +111,6 @@ class RapidCloudTaskHandler(ConfigurationHandler):
         print(divide_data_scheme)
         for provider in divide_data_scheme:
             for fragment_id in divide_data_scheme[provider]:
-                print(fragment_id)
                 self.file_trace.update({
                     "{}-{}.ros".format(new_filename, fragment_id): providers_data["cloud_providers"][int(provider) - 1]
                 })
@@ -143,6 +141,8 @@ def main():
                             help="Show all files exported to cloud")
         parser.add_argument('-p', '--show_cloud_parameters', action='store_true',
                             help="Show all cloud providers parameters")
+        parser.add_argument('-t', '--test_network_performance', action='store_true',
+                            help="Check up-link speed of all cloud providers")
         prepare_all_accounts()
         args = parser.parse_args()
         is_valid_file = os.path.exists(args.filename)
@@ -158,6 +158,8 @@ def main():
             show_cloud_files()
         elif args.show_cloud_parameters:
             show_cloud_parameters()
+        elif args.test_network_performance:
+            check_performance()
         else:
             log("No proper file provided")
     except KeyboardInterrupt:
