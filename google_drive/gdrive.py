@@ -49,6 +49,11 @@ class GoogleDriveInterface(ConfigurationHandler):
         else:
             return None
 
+    def delete_file(self, filename):
+        file_id = self.get_info_about_file(filename)["file_id"]
+        file_instance = self.drive.CreateFile({'id': file_id})
+        file_instance.Delete()
+
     def get_rapid_cloud_directory_id(self):
         if self.get_info_about_file("RAPIDCLOUD"):
             return self.get_info_about_file("RAPIDCLOUD")["file_id"]
