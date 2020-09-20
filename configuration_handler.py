@@ -1,4 +1,5 @@
 import json
+import logging
 from getpass import getpass, getuser
 
 
@@ -46,7 +47,7 @@ class ConfigurationHandler:
         data["cloud_providers"].append(account_info)
 
         self.put_data_in_json(data)
-        print("Added new account")
+        log_to_file("Added new account")
         return account_id
 
     def modify_account_parameter(self, parameter, value):
@@ -55,7 +56,7 @@ class ConfigurationHandler:
             if account["account_id"] == self.account_id:
                 account[parameter] = value
         self.put_data_in_json(data)
-        print("Parameter of account {} changed successfully".format(self.account_id))
+        log_to_file("Parameter of account {} changed successfully".format(self.account_id))
 
     def check_if_account_exist(self):
         if self.account_id:
@@ -69,9 +70,9 @@ class ConfigurationHandler:
             if account["account_id"] == self.account_id:
                 return account["mega_authorization"]["email"], account["mega_authorization"]["password"]
         else:
-            print("Enter email to your Mega account:")
+            log_to_file("Enter email to your Mega account:")
             email = input()
-            print("Enter password to your Mega account:")
+            log_to_file("Enter password to your Mega account:")
             password = getpass()
             data = self.get_data_from_json()
             if data["cloud_providers"]:
@@ -87,5 +88,17 @@ class ConfigurationHandler:
                 }}
             data["cloud_providers"].append(account_info)
             self.put_data_in_json(data)
-            print("Added new account")
+            log_to_file("Added new account")
             return email, password
+
+
+def log_to_console(value):
+    print(value, end="")
+
+
+def log_to_file(value):
+    logging.info(value)
+
+
+def setup_log_file():
+    logging.basicConfig(filename="/home/{}/.config/rapid_cloud_data/debug.log".format(getuser()), level=logging.DEBUG)

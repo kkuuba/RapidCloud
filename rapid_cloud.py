@@ -7,6 +7,7 @@ import os
 import re
 import time
 import json
+import curses
 
 
 class RapidCloudTaskHandler(ConfigurationHandler):
@@ -37,7 +38,7 @@ class RapidCloudTaskHandler(ConfigurationHandler):
         divide_data_scheme = {}
         next_frag_id = 1
         for provider_id in range(len(providers_data)):
-            assigned_fragments = int(round((providers_data[provider_id]["up_link"] / number) * 20))
+            assigned_fragments = int(round((providers_data[provider_id]["up_link"] / number) * 8))
             print(assigned_fragments)
             divide_data_scheme.update(
                 {str(provider_id + 1): list(range(next_frag_id, next_frag_id + assigned_fragments))})
@@ -49,14 +50,15 @@ class RapidCloudTaskHandler(ConfigurationHandler):
         return str(hashlib.sha256(self.start.encode("utf-8")).hexdigest())
 
     def export_file_to_cloud(self):
-        file_name = self.path.split("/")[-1]
-        self.file_encryption.prepare_file_to_export()
-        new_name = self.generate_fragment_hash_string()
-        os.popen("mv /tmp/{} /tmp/{}".format("{}.zip".format(file_name.split(".")[0]), new_name))
-        time.sleep(3)
-        divide_scheme = self.get_proper_file_divide_scheme()
-        self.file_operation.split("/tmp/{}".format(new_name), str(20))
-        self.upload_all_fragments(new_name, divide_scheme)
+        with HiddenPrints():
+            file_name = self.path.split("/")[-1]
+            self.file_encryption.prepare_file_to_export()
+            new_name = self.generate_fragment_hash_string()
+            os.popen("mv /tmp/{} /tmp/{}".format("{}.zip".format(file_name.split(".")[0]), new_name))
+            time.sleep(3)
+            divide_scheme = self.get_proper_file_divide_scheme()
+            self.file_operation.split("/tmp/{}".format(new_name), str(8))
+            self.upload_all_fragments(new_name, divide_scheme)
         self.wait_for_transfer_off_all_fragments()
         self.delete_temp_files(new_name)
         self.delete_temp_files("aes")
@@ -73,33 +75,51 @@ class RapidCloudTaskHandler(ConfigurationHandler):
         back_up_trace_file.close()
 
     def import_file_from_cloud(self):
-        file = open(self.path, mode='r')
-        self.file_trace = json.loads(file.read())
-        keys_list = list(self.file_trace.keys())
-        for key in keys_list:
-            self.tasks.append(
-                UnitDataTransferTask(key, self.file_trace[key]["account_id"], self.file_trace[key]["provider"]))
-            self.threads.append(threading.Thread(target=self.tasks[-1].import_fragment, args=()))
-            self.threads[-1].daemon = True
-            self.threads[-1].start()
+        with HiddenPrints():
+            file = open(self.path, mode='r')
+            self.file_trace = json.loads(file.read())
+            keys_list = list(self.file_trace.keys())
+            for key in keys_list:
+                self.tasks.append(
+                    UnitDataTransferTask(key, self.file_trace[key]["account_id"], self.file_trace[key]["provider"]))
+                self.threads.append(threading.Thread(target=self.tasks[-1].import_fragment, args=()))
+                self.threads[-1].daemon = True
+                self.threads[-1].start()
         self.wait_for_transfer_off_all_fragments()
-        hash_name = keys_list[-1].split("-")[0]
-        self.file_operation.merge("/tmp/{}.zip".format(keys_list[-1]).split("-")[0])
-        self.file_encryption = FileEncryption(hash_name, self.encryption_key)
-        self.file_encryption.prepare_file_after_import()
-        self.delete_temp_files(hash_name)
-        self.delete_temp_files("aes")
+        with HiddenPrints():
+            hash_name = keys_list[-1].split("-")[0]
+            self.file_operation.merge("/tmp/{}.zip".format(keys_list[-1]).split("-")[0])
+            self.file_encryption = FileEncryption(hash_name, self.encryption_key)
+            self.file_encryption.prepare_file_after_import()
+            self.delete_temp_files(hash_name)
+            self.delete_temp_files("aes")
 
     def wait_for_transfer_off_all_fragments(self):
-        while True:
-            self.transfer_finished = True
-            for task in self.tasks:
-                if not task.finish:
-                    self.transfer_finished = False
+        std_scr = curses.initscr()
+        curses.noecho()
+        curses.cbreak()
+        try:
+            while True:
+                self.transfer_finished = True
+                for task in self.tasks:
+                    task_id = self.tasks.index(task)
+                    if not task.finish:
+                        self.transfer_finished = False
+                        std_scr.addstr(task_id, 0,
+                                       "FRAGMENT_[{}] ----> {} ----------------------- [in progress]\n".format(
+                                           task_id + 1, task.provider))
+                    else:
+                        std_scr.addstr(task_id, 0,
+                                       "FRAGMENT_[{}] ----> {} ----------------------- [success]\n".format(
+                                           task_id + 1, task.provider))
+                if self.transfer_finished:
                     break
-            if self.transfer_finished:
-                break
-            time.sleep(2)
+                std_scr.refresh()
+                time.sleep(0.5)
+        finally:
+            curses.echo()
+            curses.nocbreak()
+            curses.endwin()
 
     def upload_all_fragments(self, new_filename, divide_data_scheme):
         providers_data = self.get_data_from_json()
@@ -130,6 +150,7 @@ class RapidCloudTaskHandler(ConfigurationHandler):
 
 
 def main():
+    setup_log_file()
     try:
         parser = argparse.ArgumentParser(
             description='Export or import file to or from multiple cloud storage providers')
@@ -161,9 +182,9 @@ def main():
         elif args.test_network_performance:
             check_performance()
         else:
-            log("No proper file provided")
+            log_to_console("No proper file provided")
     except KeyboardInterrupt:
-        log("Execution interrupted\n")
+        log_to_console("Execution interrupted\n")
         exit()
 
 
