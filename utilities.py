@@ -70,7 +70,7 @@ class ThroughputTest:
     def up_link_sub_test(self, sub_test_id, tp=14):
         subtest_start = time.time()
         subtest_result = {}
-        start_data_size = 2
+        start_data_size = 32
         while True:
             start_data_size = start_data_size * 2
             test_file_name = "test_{}_{}K".format(str(sub_test_id), str(start_data_size))
@@ -133,7 +133,7 @@ def check_provider_performance(provider_id, n=3):
     while not all(test.up_link_speed for test in tasks):
         time.sleep(2)
         log_to_file("...")
-    account_config.modify_account_parameter("up_link", sum(test.up_link_speed for test in tasks) / n)
+    account_config.modify_account_parameter("up_link", sum(test.up_link_speed for test in tasks) * 8)
     ThroughputTest.delete_test_files()
 
 
@@ -166,13 +166,7 @@ def set_default_configuration_scheme():
         file.close()
     with open("/home/{}/.config/rapid_cloud_data/google_drive/client_secrets.json".format(user_name), "w+") as file:
         file.write(
-            """{"installed": {"client_id": "894311503588-qi4p4ld3fng02a0c8j0mfvk656a4698t.apps.googleusercontent.com",
-                               "project_id": "quickstart-1583352235400",
-                               "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                               "token_uri": "https://oauth2.googleapis.com/token",
-                               "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-                               "client_secret": "hSJvUATRj3p-s7bY1iXxZWkm",
-                               "redirect_uris": ["urn:ietf:wg:oauth:2.0:oob", "http://localhost"]}}"""
+            """HERE SHOULD BE YOUR content of your 'client_secrets.json' file"""
         )
         file.close()
 
