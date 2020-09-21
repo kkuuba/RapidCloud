@@ -59,7 +59,7 @@ class RapidCloudTaskHandler(ConfigurationHandler):
             divide_scheme = self.get_proper_file_divide_scheme()
             self.file_operation.split("/tmp/{}".format(new_name), str(8))
             self.upload_all_fragments(new_name, divide_scheme)
-        self.wait_for_transfer_off_all_fragments()
+        self.wait_for_transfer_off_all_fragments(transfer_direction="upload")
         self.delete_temp_files(new_name)
         self.delete_temp_files("aes")
         self.create_original_file_trace(file_name)
@@ -85,7 +85,7 @@ class RapidCloudTaskHandler(ConfigurationHandler):
                 self.threads.append(threading.Thread(target=self.tasks[-1].import_fragment, args=()))
                 self.threads[-1].daemon = True
                 self.threads[-1].start()
-        self.wait_for_transfer_off_all_fragments()
+        self.wait_for_transfer_off_all_fragments(transfer_direction="download")
         with HiddenPrints():
             hash_name = keys_list[-1].split("-")[0]
             self.file_operation.merge("/tmp/{}.zip".format(keys_list[-1]).split("-")[0])
@@ -94,28 +94,37 @@ class RapidCloudTaskHandler(ConfigurationHandler):
             self.delete_temp_files(hash_name)
             self.delete_temp_files("aes")
 
-    def wait_for_transfer_off_all_fragments(self):
+    def wait_for_transfer_off_all_fragments(self, transfer_direction):
+        if transfer_direction == "upload":
+            arrow = "---->"
+        else:
+            arrow = "<----"
         std_scr = curses.initscr()
         curses.noecho()
         curses.cbreak()
         try:
+            curses.start_color()
+            curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+            curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
+            std_scr.addstr(0, 0, "Starting {} of 8 fragments -> \n".format(transfer_direction))
             while True:
                 self.transfer_finished = True
                 for task in self.tasks:
-                    task_id = self.tasks.index(task)
+                    task_id = self.tasks.index(task) + 1
                     if not task.finish:
                         self.transfer_finished = False
                         std_scr.addstr(task_id, 0,
-                                       "FRAGMENT_[{}] ----> {} ----------------------- [in progress]\n".format(
-                                           task_id + 1, task.provider))
+                                       "FRAGMENT_[{}] {} {} ----------------------- [{} in progress]\n".format(
+                                           task_id, arrow, task.provider, transfer_direction), curses.color_pair(1))
                     else:
                         std_scr.addstr(task_id, 0,
-                                       "FRAGMENT_[{}] ----> {} ----------------------- [success]\n".format(
-                                           task_id + 1, task.provider))
+                                       "FRAGMENT_[{}] {} {} ----------------------- [{} finished]\n".format(
+                                           task_id, arrow, task.provider, transfer_direction), curses.color_pair(2))
                 if self.transfer_finished:
+                    time.sleep(0.5)
                     break
                 std_scr.refresh()
-                time.sleep(0.5)
+                time.sleep(0.1)
         finally:
             curses.echo()
             curses.nocbreak()
