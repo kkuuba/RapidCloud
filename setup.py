@@ -54,10 +54,8 @@ setup(
     install_requires=["setuptools",
                       "PyDrive",
                       "pyAesCrypt",
-                      "dropbox",
                       "mega.py",
-                      "file_split_merge",
-                      "httplib2==0.18.1"],
+                      "file_split_merge"],
     entry_points={
         'console_scripts': ['rapid_cloud='
                             'rapid_cloud:main'],

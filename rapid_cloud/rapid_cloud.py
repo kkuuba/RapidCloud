@@ -33,18 +33,25 @@ class RapidCloudTaskHandler(ConfigurationHandler):
         :return:
         """
         providers_data = self.get_data_from_json()["cloud_providers"]
+        file_size = os.path.getsize(self.path)
+        if file_size < 10000000:
+            frag_number = len(providers_data)
+        elif 10000000 < file_size < 90000000:
+            frag_number = len(providers_data) * 3
+        else:
+            frag_number = 20
         number = sum(item["up_link"] for item in providers_data)
-        print(number)
+        log_to_file(number)
         divide_data_scheme = {}
         next_frag_id = 1
         for provider_id in range(len(providers_data)):
-            assigned_fragments = int(round((providers_data[provider_id]["up_link"] / number) * 8))
-            print(assigned_fragments)
+            assigned_fragments = int(round((providers_data[provider_id]["up_link"] / number) * frag_number))
+            log_to_file(assigned_fragments)
             divide_data_scheme.update(
                 {str(provider_id + 1): list(range(next_frag_id, next_frag_id + assigned_fragments))})
-            next_frag_id = assigned_fragments + 1
+            next_frag_id = next_frag_id + assigned_fragments
 
-        return divide_data_scheme
+        return divide_data_scheme, str(frag_number)
 
     def generate_fragment_hash_string(self):
         return str(hashlib.sha256(self.start.encode("utf-8")).hexdigest())
@@ -56,10 +63,10 @@ class RapidCloudTaskHandler(ConfigurationHandler):
             new_name = self.generate_fragment_hash_string()
             os.popen("mv /tmp/{} /tmp/{}".format("{}.zip".format(file_name.split(".")[0]), new_name))
             time.sleep(3)
-            divide_scheme = self.get_proper_file_divide_scheme()
-            self.file_operation.split("/tmp/{}".format(new_name), str(8))
+            divide_scheme, number_of_fragments = self.get_proper_file_divide_scheme()
+            self.file_operation.split("/tmp/{}".format(new_name), number_of_fragments)
             self.upload_all_fragments(new_name, divide_scheme)
-        self.wait_for_transfer_off_all_fragments(transfer_direction="upload")
+        self.wait_for_transfer_off_all_fragments(transfer_direction="upload", frag_number=number_of_fragments)
         self.delete_temp_files(new_name)
         self.delete_temp_files("aes")
         self.create_original_file_trace(file_name)
@@ -85,7 +92,7 @@ class RapidCloudTaskHandler(ConfigurationHandler):
                 self.threads.append(threading.Thread(target=self.tasks[-1].import_fragment, args=()))
                 self.threads[-1].daemon = True
                 self.threads[-1].start()
-        self.wait_for_transfer_off_all_fragments(transfer_direction="download")
+        self.wait_for_transfer_off_all_fragments(transfer_direction="download", frag_number=len(keys_list))
         with HiddenPrints():
             hash_name = keys_list[-1].split("-")[0]
             self.file_operation.merge("/tmp/{}.zip".format(keys_list[-1]).split("-")[0])
@@ -94,7 +101,7 @@ class RapidCloudTaskHandler(ConfigurationHandler):
             self.delete_temp_files(hash_name)
             self.delete_temp_files("aes")
 
-    def wait_for_transfer_off_all_fragments(self, transfer_direction):
+    def wait_for_transfer_off_all_fragments(self, transfer_direction, frag_number):
         if transfer_direction == "upload":
             arrow = "---->"
         else:
@@ -106,7 +113,7 @@ class RapidCloudTaskHandler(ConfigurationHandler):
             curses.start_color()
             curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)
             curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
-            std_scr.addstr(0, 0, "Starting {} of 8 fragments -> \n".format(transfer_direction))
+            std_scr.addstr(0, 0, "Starting {} of {} fragments -> \n".format(transfer_direction, str(frag_number)))
             while True:
                 self.transfer_finished = True
                 for task in self.tasks:
@@ -137,7 +144,7 @@ class RapidCloudTaskHandler(ConfigurationHandler):
         self.file_trace.update({
             "{}-{}.ros".format(new_filename, "CRC"): providers_data["cloud_providers"][0]
         })
-        print(divide_data_scheme)
+        log_to_file(divide_data_scheme)
         for provider in divide_data_scheme:
             for fragment_id in divide_data_scheme[provider]:
                 self.file_trace.update({
