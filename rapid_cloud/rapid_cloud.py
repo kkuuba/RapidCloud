@@ -109,6 +109,8 @@ class RapidCloudTaskHandler(ConfigurationHandler):
         std_scr = curses.initscr()
         curses.noecho()
         curses.cbreak()
+        std_scr.idlok(yes=True)
+        std_scr.scroll(True)
         try:
             curses.start_color()
             curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)
@@ -121,12 +123,14 @@ class RapidCloudTaskHandler(ConfigurationHandler):
                     if not task.finish:
                         self.transfer_finished = False
                         std_scr.addstr(task_id, 0,
-                                       "FRAGMENT_[{}] {} {} ----------------------- [{} in progress]\n".format(
-                                           task_id, arrow, task.provider, transfer_direction), curses.color_pair(1))
+                                       "FRAGMENT_[{}] {} {}_{} ----------------------- [{} in progress]\n".format(
+                                           task_id, arrow, task.provider, task.provider_id, transfer_direction),
+                                       curses.color_pair(1))
                     else:
                         std_scr.addstr(task_id, 0,
-                                       "FRAGMENT_[{}] {} {} ----------------------- [{} finished]\n".format(
-                                           task_id, arrow, task.provider, transfer_direction), curses.color_pair(2))
+                                       "FRAGMENT_[{}] {} {}_{} ----------------------- [{} finished]\n".format(
+                                           task_id, arrow, task.provider, task.provider_id, transfer_direction),
+                                       curses.color_pair(2))
                 if self.transfer_finished:
                     time.sleep(0.5)
                     break

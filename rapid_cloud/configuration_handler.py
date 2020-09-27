@@ -103,3 +103,10 @@ def log_to_file(value):
 
 def setup_log_file():
     logging.basicConfig(filename="/home/{}/.config/rapid_cloud_data/debug.log".format(getuser()), level=logging.DEBUG)
+
+
+def create_directory(dir_path):
+    try:
+        os.mkdir(path=dir_path)
+    except OSError:
+        pass

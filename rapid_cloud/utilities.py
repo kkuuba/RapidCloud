@@ -1,6 +1,6 @@
 from rapid_cloud.google_drive.gdrive import GoogleDriveInterface
 from rapid_cloud.mega_drive.mdrive import MegaCloudInterface
-from rapid_cloud.configuration_handler import ConfigurationHandler, log_to_console, log_to_file, setup_log_file
+from rapid_cloud.configuration_handler import *
 from getpass import getpass, getuser
 from zipfile import ZipFile
 from os.path import basename
@@ -159,25 +159,16 @@ def check_if_providers_defined():
 
 def set_default_configuration_scheme():
     try:
-        os.mkdir(path="/home/{}/.config".format(user_name))
-        os.mkdir(path="/home/{}/.config/rapid_cloud_data".format(user_name))
-        os.mkdir(path="/home/{}/.config/rapid_cloud_data/exported_files".format(user_name))
-        os.mkdir(path="/home/{}/.config/rapid_cloud_data/google_drive".format(user_name))
+        create_directory(dir_path="/home/{}/.config".format(user_name))
+        create_directory(dir_path="/home/{}/.config/rapid_cloud_data".format(user_name))
+        create_directory(dir_path="/home/{}/.config/rapid_cloud_data/exported_files".format(user_name))
+        create_directory(dir_path="/home/{}/.config/rapid_cloud_data/google_drive".format(user_name))
         with open("/home/{}/.config/rapid_cloud_data/configuration.json".format(user_name), "w+") as file:
             file.write("""{"cloud_providers": [], "password": ""}""")
             file.close()
         with open("/home/{}/.config/rapid_cloud_data/google_drive/client_secrets.json".format(user_name), "w+") as file:
             file.write(
-                """{"installed": {
-                    "client_id": "894311503588-qi4p4ld3fng02a0c8j0mfvk656a4698t.apps.googleusercontent.com",
-                    "project_id": "quickstart-1583352235400",
-                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                    "token_uri": "https://oauth2.googleapis.com/token",
-                    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-                    "client_secret": "hSJvUATRj3p-s7bY1iXxZWkm",
-                    "redirect_uris": [
-                      "urn:ietf:wg:oauth:2.0:oob",
-                      "http://localhost"]}}"""
+                """NONE"""
             )
             file.close()
     except FileExistsError:
