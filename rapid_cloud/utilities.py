@@ -141,6 +141,7 @@ def check_performance():
     configuration_handler = ConfigurationHandler()
     info = configuration_handler.get_data_from_json()
     for account in info["cloud_providers"]:
+        log_to_console("Uplink test of provider {} ongoing ...".format(account["account_id"]))
         check_provider_performance(account["account_id"])
 
 
@@ -168,7 +169,7 @@ def set_default_configuration_scheme():
             file.close()
         with open("/home/{}/.config/rapid_cloud_data/google_drive/client_secrets.json".format(user_name), "w+") as file:
             file.write(
-                """NONE"""
+                """HERE SHOULD BE CONTENT OF YOUR SECURITY.JSON FILE"""
             )
             file.close()
     except FileExistsError:
@@ -228,7 +229,25 @@ def show_cloud_files():
 
 
 def show_cloud_parameters():
-    log_to_console("Not implemented yet")
+    configuration_handler = ConfigurationHandler()
+    info = configuration_handler.get_data_from_json()["cloud_providers"]
+    log_to_console("Gathering providers data ...\n")
+    data = []
+    for provider in info:
+        if provider["provider"] == "google":
+            provider_instance = GoogleDriveInterface(provider["account_id"])
+        else:
+            provider_instance = MegaCloudInterface(provider["account_id"])
+        provider_data = provider_instance.get_cloud_provider_data()
+        provider_data.update({"average_uplink_rate": str(round(provider["up_link"]
+                                                               * 8 / 1048576, 4)), "provider_name": provider["provider"]})
+
+        data.append(provider_data)
+
+    log_to_console("{:<30} {:<10} {:<17} {:<15}\n".format('EMAIL', 'PROVIDER', 'UPLINK', 'AVILABLE SPACE'))
+    for item in data:
+        log_to_console("{:<30} {:<10} {:<17} {:<15}\n".format(
+            item["email"], item["provider_name"], item["average_uplink_rate"] + " Mbit/s", item["available_space"] + " GB"))
 
 
 class HiddenPrints:

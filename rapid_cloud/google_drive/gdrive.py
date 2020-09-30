@@ -28,8 +28,10 @@ class GoogleDriveInterface(ConfigurationHandler):
 
     def get_cloud_provider_data(self):
         data = self.drive.GetAbout()
-        information = {"total_space": data["quotaBytesTotal"],
-                       "available_space": str(int(data["quotaBytesTotal"]) - int(data["quotaBytesUsedAggregate"]))
+        information = {"total_space": str(round(int(data["quotaBytesTotal"]) / 1073741824, 4)),
+                       "used_space": str(round(int(data["quotaBytesUsedAggregate"]) / 1073741824, 4)),
+                       "available_space": str(round((int(data["quotaBytesTotal"]) - int(data["quotaBytesUsedAggregate"])) / 1073741824, 4)),
+                       "email": data["user"]["emailAddress"]
                        }
         return information
 

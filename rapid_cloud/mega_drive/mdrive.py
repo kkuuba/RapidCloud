@@ -22,8 +22,10 @@ class MegaCloudInterface(ConfigurationHandler):
 
     def get_cloud_provider_data(self):
         data = self.drive.get_storage_space(kilo=True)
-        information = {"total_space": str(int(data["total"])),
-                       "available_space": str(int(data["total"]) - int(data["used"]))
+        information = {"total_space": str(round(int(data["total"]) / 1073741824, 4)),
+                       "used_space": str(round(int(data["used"]) / 1073741824, 4)),
+                       "available_space": str(round((int(data["total"]) - int(data["used"])) / 1073741824, 4)),
+                       "email": data["email"]
                        }
         return information
 

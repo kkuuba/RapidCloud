@@ -1,5 +1,7 @@
+from math import floor
 from file_split_merge import SplitAndCombineFiles
-from rapid_cloud.utilities import *
+from rapid_cloud.terminal_interface import TerminalInterface
+from rapid_cloud.utilities import UnitDataTransferTask, ConfigurationHandler, FileEncryption, log_to_console, log_to_file, HiddenPrints, prepare_all_accounts, user_name, check_performance, show_cloud_parameters, reset_configuration, show_cloud_files
 import argparse
 import threading
 import hashlib
@@ -45,7 +47,10 @@ class RapidCloudTaskHandler(ConfigurationHandler):
         divide_data_scheme = {}
         next_frag_id = 1
         for provider_id in range(len(providers_data)):
-            assigned_fragments = int(round((providers_data[provider_id]["up_link"] / number) * frag_number))
+            if providers_data[provider_id]["up_link"] == min(list(item["up_link"] for item in providers_data)):
+                assigned_fragments = int(floor((providers_data[provider_id]["up_link"] / number) * frag_number))
+            else:
+                assigned_fragments = int(round((providers_data[provider_id]["up_link"] / number) * frag_number))
             log_to_file(assigned_fragments)
             divide_data_scheme.update(
                 {str(provider_id + 1): list(range(next_frag_id, next_frag_id + assigned_fragments))})
@@ -66,9 +71,9 @@ class RapidCloudTaskHandler(ConfigurationHandler):
             divide_scheme, number_of_fragments = self.get_proper_file_divide_scheme()
             self.file_operation.split("/tmp/{}".format(new_name), number_of_fragments)
             self.upload_all_fragments(new_name, divide_scheme)
-        self.wait_for_transfer_off_all_fragments(transfer_direction="upload", frag_number=number_of_fragments)
-        self.delete_temp_files(new_name)
-        self.delete_temp_files("aes")
+        TerminalInterface(self.tasks).show_ongoing_tasks("upload", number_of_fragments)
+        self.delete_temp_files()
+        self.delete_temp_files()
         self.create_original_file_trace(file_name)
 
     def create_original_file_trace(self, original_file_name):
@@ -92,54 +97,14 @@ class RapidCloudTaskHandler(ConfigurationHandler):
                 self.threads.append(threading.Thread(target=self.tasks[-1].import_fragment, args=()))
                 self.threads[-1].daemon = True
                 self.threads[-1].start()
-        self.wait_for_transfer_off_all_fragments(transfer_direction="download", frag_number=len(keys_list))
+        TerminalInterface(self.tasks).show_ongoing_tasks("download", len(keys_list))
         with HiddenPrints():
             hash_name = keys_list[-1].split("-")[0]
             self.file_operation.merge("/tmp/{}.zip".format(keys_list[-1]).split("-")[0])
             self.file_encryption = FileEncryption(hash_name, self.encryption_key)
             self.file_encryption.prepare_file_after_import()
-            self.delete_temp_files(hash_name)
-            self.delete_temp_files("aes")
-
-    def wait_for_transfer_off_all_fragments(self, transfer_direction, frag_number):
-        if transfer_direction == "upload":
-            arrow = "---->"
-        else:
-            arrow = "<----"
-        std_scr = curses.initscr()
-        curses.noecho()
-        curses.cbreak()
-        std_scr.idlok(yes=True)
-        std_scr.scroll(True)
-        try:
-            curses.start_color()
-            curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)
-            curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
-            std_scr.addstr(0, 0, "Starting {} of {} fragments -> \n".format(transfer_direction, str(frag_number)))
-            while True:
-                self.transfer_finished = True
-                for task in self.tasks:
-                    task_id = self.tasks.index(task) + 1
-                    if not task.finish:
-                        self.transfer_finished = False
-                        std_scr.addstr(task_id, 0,
-                                       "FRAGMENT_[{}] {} {}_{} ----------------------- [{} in progress]\n".format(
-                                           task_id, arrow, task.provider, task.provider_id, transfer_direction),
-                                       curses.color_pair(1))
-                    else:
-                        std_scr.addstr(task_id, 0,
-                                       "FRAGMENT_[{}] {} {}_{} ----------------------- [{} finished]\n".format(
-                                           task_id, arrow, task.provider, task.provider_id, transfer_direction),
-                                       curses.color_pair(2))
-                if self.transfer_finished:
-                    time.sleep(0.5)
-                    break
-                std_scr.refresh()
-                time.sleep(0.1)
-        finally:
-            curses.echo()
-            curses.nocbreak()
-            curses.endwin()
+            self.delete_temp_files()
+            self.delete_temp_files()
 
     def upload_all_fragments(self, new_filename, divide_data_scheme):
         providers_data = self.get_data_from_json()
@@ -162,11 +127,8 @@ class RapidCloudTaskHandler(ConfigurationHandler):
                 self.threads[-1].start()
 
     @staticmethod
-    def delete_temp_files(filename):
-        pattern = re.compile(r"{}*.".format(filename))
-        for root, dirs, files in os.walk("/tmp"):
-            for file in filter(lambda x: re.match(pattern, x), files):
-                os.remove(os.path.join(root, file))
+    def delete_temp_files():
+        os.system("rm -rf /tmp/*")
 
 
 def main():
