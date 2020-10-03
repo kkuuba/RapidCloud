@@ -49,6 +49,9 @@ class UnitDataTransferTask:
         elif self.provider == "megacloud":
             return MegaCloudInterface(self.provider_id)
 
+    def get_provider_information(self):
+        return self.provider_instance.get_cloud_provider_data()
+
 
 class ThroughputTest:
     def __init__(self, account_id):
@@ -169,7 +172,16 @@ def set_default_configuration_scheme():
             file.close()
         with open("/home/{}/.config/rapid_cloud_data/google_drive/client_secrets.json".format(user_name), "w+") as file:
             file.write(
-                """HERE SHOULD BE CONTENT OF YOUR SECURITY.JSON FILE"""
+                """{"installed": {
+                    "client_id": "894311503588-qi4p4ld3fng02a0c8j0mfvk656a4698t.apps.googleusercontent.com",
+                    "project_id": "quickstart-1583352235400",
+                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                    "token_uri": "https://oauth2.googleapis.com/token",
+                    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+                    "client_secret": "hSJvUATRj3p-s7bY1iXxZWkm",
+                    "redirect_uris": [
+                      "urn:ietf:wg:oauth:2.0:oob",
+                      "http://localhost"]}}"""
             )
             file.close()
     except FileExistsError:
@@ -234,20 +246,20 @@ def show_cloud_parameters():
     log_to_console("Gathering providers data ...\n")
     data = []
     for provider in info:
-        if provider["provider"] == "google":
-            provider_instance = GoogleDriveInterface(provider["account_id"])
-        else:
-            provider_instance = MegaCloudInterface(provider["account_id"])
-        provider_data = provider_instance.get_cloud_provider_data()
+        provider_data = UnitDataTransferTask(
+            None, provider["account_id"], provider["provider"]).get_provider_information()
         provider_data.update({"average_uplink_rate": str(round(provider["up_link"]
                                                                * 8 / 1048576, 4)), "provider_name": provider["provider"]})
 
         data.append(provider_data)
 
     log_to_console("{:<30} {:<10} {:<17} {:<15}\n".format('EMAIL', 'PROVIDER', 'UPLINK', 'AVILABLE SPACE'))
+    all_avilable_space = 0
     for item in data:
         log_to_console("{:<30} {:<10} {:<17} {:<15}\n".format(
             item["email"], item["provider_name"], item["average_uplink_rate"] + " Mbit/s", item["available_space"] + " GB"))
+        all_avilable_space += float(item["available_space"])
+    log_to_console("AVILABLE SPACE: {} GB\n".format(all_avilable_space))
 
 
 class HiddenPrints:
