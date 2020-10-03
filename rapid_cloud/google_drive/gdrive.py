@@ -73,7 +73,6 @@ class GoogleDriveInterface(ConfigurationHandler):
             self.drive_auth.LocalWebserverAuth()
             self.account_id = self.enter_new_account()
         elif self.drive_auth.access_token_expired:
-            print("Refreshing api token ...")
             self.drive_auth.Refresh()
         else:
             self.drive_auth.Authorize()

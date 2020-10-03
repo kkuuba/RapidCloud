@@ -42,21 +42,27 @@ class RapidCloudTaskHandler(ConfigurationHandler):
             frag_number = len(providers_data) * 3
         else:
             frag_number = 20
+        frag_size_in_gb = round(int(file_size / frag_number) / 1073741824, 4)
         number = sum(item["up_link"] for item in providers_data)
         log_to_file(number)
         divide_data_scheme = {}
         next_frag_id = 1
         for provider_id in range(len(providers_data)):
-            if providers_data[provider_id]["up_link"] == min(list(item["up_link"] for item in providers_data)):
-                assigned_fragments = int(floor((providers_data[provider_id]["up_link"] / number) * frag_number))
-            else:
-                assigned_fragments = int(round((providers_data[provider_id]["up_link"] / number) * frag_number))
+            assigned_fragments = int(round((providers_data[provider_id]["up_link"] / number) * frag_number))
             log_to_file(assigned_fragments)
             divide_data_scheme.update(
                 {str(provider_id + 1): list(range(next_frag_id, next_frag_id + assigned_fragments))})
             next_frag_id = next_frag_id + assigned_fragments
 
-        return divide_data_scheme, str(frag_number)
+        for provider in providers_data:
+            avilable_space = UnitDataTransferTask(None, provider["account_id"], provider["provider"]).get_provider_information()[
+                "available_space"]
+            if len(divide_data_scheme[str(provider["account_id"])]) * frag_size_in_gb > float(avilable_space):
+                raise NoAvilableSpaceError
+            else:
+                pass
+
+        return divide_data_scheme, str(next_frag_id - 1)
 
     def generate_fragment_hash_string(self):
         return str(hashlib.sha256(self.start.encode("utf-8")).hexdigest())
@@ -72,7 +78,6 @@ class RapidCloudTaskHandler(ConfigurationHandler):
             self.file_operation.split("/tmp/{}".format(new_name), number_of_fragments)
             self.upload_all_fragments(new_name, divide_scheme)
         TerminalInterface(self.tasks).show_ongoing_tasks("upload", number_of_fragments)
-        self.delete_temp_files()
         self.delete_temp_files()
         self.create_original_file_trace(file_name)
 
@@ -103,7 +108,6 @@ class RapidCloudTaskHandler(ConfigurationHandler):
             self.file_operation.merge("/tmp/{}.zip".format(keys_list[-1]).split("-")[0])
             self.file_encryption = FileEncryption(hash_name, self.encryption_key)
             self.file_encryption.prepare_file_after_import()
-            self.delete_temp_files()
             self.delete_temp_files()
 
     def upload_all_fragments(self, new_filename, divide_data_scheme):
@@ -167,6 +171,11 @@ def main():
     except KeyboardInterrupt:
         log_to_console("Execution interrupted\n")
         exit()
+
+
+class NoAvilableSpaceError(Exception):
+    """Base class for exceptions in this module."""
+    pass
 
 
 if __name__ == "__main__":
