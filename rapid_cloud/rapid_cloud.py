@@ -68,6 +68,7 @@ class RapidCloudTaskHandler(ConfigurationHandler):
         return str(hashlib.sha256(self.start.encode("utf-8")).hexdigest())
 
     def export_file_to_cloud(self):
+        log_to_console("Preaparing for export to cloud ...")
         with HiddenPrints():
             file_name = self.path.split("/")[-1]
             self.file_encryption.prepare_file_to_export()
@@ -92,6 +93,7 @@ class RapidCloudTaskHandler(ConfigurationHandler):
         back_up_trace_file.close()
 
     def import_file_from_cloud(self):
+        log_to_console("Preaparing for import from cloud ...")
         with HiddenPrints():
             file = open(self.path, mode='r')
             self.file_trace = json.loads(file.read())
