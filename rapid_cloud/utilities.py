@@ -172,16 +172,7 @@ def set_default_configuration_scheme():
             file.close()
         with open("/home/{}/.config/rapid_cloud_data/google_drive/client_secrets.json".format(user_name), "w+") as file:
             file.write(
-                """{"installed": {
-                    "client_id": "894311503588-qi4p4ld3fng02a0c8j0mfvk656a4698t.apps.googleusercontent.com",
-                    "project_id": "quickstart-1583352235400",
-                    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                    "token_uri": "https://oauth2.googleapis.com/token",
-                    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-                    "client_secret": "hSJvUATRj3p-s7bY1iXxZWkm",
-                    "redirect_uris": [
-                      "urn:ietf:wg:oauth:2.0:oob",
-                      "http://localhost"]}}"""
+                """PLACE HERE CONTENT OF YOUR CLIENT_SECRET.JSON FILE OR USE .WHL FILE TO INSTALL"""
             )
             file.close()
     except FileExistsError:
