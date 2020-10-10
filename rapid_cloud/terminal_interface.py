@@ -21,11 +21,6 @@ class TerminalInterface:
         self.std_scr.addstr(0, 0, "Starting {} of {} fragments -> \n".format(self.transfer_direction,
                                                                              str(self.number_of_fragments)))
 
-    def teardown_terminal_interface(self):
-        curses.echo()
-        curses.nocbreak()
-        curses.endwin()
-
     def refresh_ongoing_tasks(self, arrow):
         self.transfer_finished = True
         for task in self.tasks:
@@ -66,3 +61,9 @@ class TerminalInterface:
                     self.setup_terminal_interface()
         finally:
             self.teardown_terminal_interface()
+
+    @staticmethod
+    def teardown_terminal_interface():
+        curses.echo()
+        curses.nocbreak()
+        curses.endwin()

@@ -1,15 +1,14 @@
-from math import floor
 from file_split_merge import SplitAndCombineFiles
 from rapid_cloud.terminal_interface import TerminalInterface
-from rapid_cloud.utilities import UnitDataTransferTask, ConfigurationHandler, FileEncryption, log_to_console, log_to_file, HiddenPrints, prepare_all_accounts, user_name, check_performance, show_cloud_parameters, reset_configuration, show_cloud_files
+from rapid_cloud.utilities import UnitDataTransferTask, ConfigurationHandler, FileEncryption, log_to_console, \
+    log_to_file, HiddenPrints, prepare_all_accounts, user_name, check_performance, show_cloud_parameters, \
+    reset_configuration, show_cloud_files
 import argparse
 import threading
 import hashlib
 import os
-import re
 import time
 import json
-import curses
 
 
 class RapidCloudTaskHandler(ConfigurationHandler):
@@ -30,7 +29,7 @@ class RapidCloudTaskHandler(ConfigurationHandler):
 
     def get_proper_file_divide_scheme(self):
         """
-        Here will be code to obtain file spliting
+        Here will be code to obtain file splitting
 
         :return:
         """
@@ -55,8 +54,9 @@ class RapidCloudTaskHandler(ConfigurationHandler):
             next_frag_id = next_frag_id + assigned_fragments
 
         for provider in providers_data:
-            avilable_space = UnitDataTransferTask(None, provider["account_id"], provider["provider"]).get_provider_information()[
-                "available_space"]
+            avilable_space = \
+                UnitDataTransferTask(None, provider["account_id"], provider["provider"]).get_provider_information()[
+                    "available_space"]
             if len(divide_data_scheme[str(provider["account_id"])]) * frag_size_in_gb > float(avilable_space):
                 raise NoAvilableSpaceError
             else:
@@ -68,7 +68,7 @@ class RapidCloudTaskHandler(ConfigurationHandler):
         return str(hashlib.sha256(self.start.encode("utf-8")).hexdigest())
 
     def export_file_to_cloud(self):
-        log_to_console("Preaparing for export to cloud ...")
+        log_to_console("Preparing for export to cloud ...")
         with HiddenPrints():
             file_name = self.path.split("/")[-1]
             self.file_encryption.prepare_file_to_export()
@@ -93,7 +93,7 @@ class RapidCloudTaskHandler(ConfigurationHandler):
         back_up_trace_file.close()
 
     def import_file_from_cloud(self):
-        log_to_console("Preaparing for import from cloud ...")
+        log_to_console("Preparing for import from cloud ...")
         with HiddenPrints():
             file = open(self.path, mode='r')
             self.file_trace = json.loads(file.read())
@@ -134,13 +134,15 @@ class RapidCloudTaskHandler(ConfigurationHandler):
 
     @staticmethod
     def delete_temp_files():
-        os.system("rm -rf /tmp/*")
+        os.system("rm -rf /tmp/*zip")
+        os.system("rm -rf /tmp/*ros")
 
 
 def main():
     try:
         parser = argparse.ArgumentParser(
-            description='Manage distributed file transfers to or from multiple cloud storage accounts using AES-256 fragments encryption')
+            description='Manage distributed file transfers to or from multiple cloud storage'
+                        ' accounts using AES-256 fragments encryption')
         parser.add_argument('filename', nargs='?', default="none",
                             help="provide the file to exort or .rp file trace to import data from cloud storage")
         parser.add_argument('-r', '--reset_configuration', action='store_true',

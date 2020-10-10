@@ -30,7 +30,9 @@ class GoogleDriveInterface(ConfigurationHandler):
         data = self.drive.GetAbout()
         information = {"total_space": str(round(int(data["quotaBytesTotal"]) / 1073741824, 4)),
                        "used_space": str(round(int(data["quotaBytesUsedAggregate"]) / 1073741824, 4)),
-                       "available_space": str(round((int(data["quotaBytesTotal"]) - int(data["quotaBytesUsedAggregate"])) / 1073741824, 4)),
+                       "available_space": str(
+                           round((int(data["quotaBytesTotal"]) - int(data["quotaBytesUsedAggregate"])) / 1073741824,
+                                 4)),
                        "email": data["user"]["emailAddress"]
                        }
         return information

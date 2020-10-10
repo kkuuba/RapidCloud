@@ -1,13 +1,13 @@
 from rapid_cloud.google_drive.gdrive import GoogleDriveInterface
 from rapid_cloud.mega_drive.mdrive import MegaCloudInterface
-from rapid_cloud.configuration_handler import ConfigurationHandler, log_to_file, log_to_console, setup_log_file, create_directory
+from rapid_cloud.configuration_handler import ConfigurationHandler, log_to_file, log_to_console, setup_log_file, \
+    create_directory
 from getpass import getpass, getuser
 from zipfile import ZipFile
 from os.path import basename
 import pyAesCrypt
 import threading
 import os
-import re
 import json
 import shutil
 import time
@@ -225,7 +225,7 @@ def reset_configuration():
         shutil.rmtree("/home/{}/.config/rapid_cloud_data".format(user_name))
         log_to_console("Configuration was successfully removed")
     else:
-        log_to_console("Exiting ...")       
+        log_to_console("Exiting ...")
 
 
 def show_cloud_files():
@@ -243,7 +243,8 @@ def show_cloud_parameters():
         provider_data = UnitDataTransferTask(
             None, provider["account_id"], provider["provider"]).get_provider_information()
         provider_data.update({"average_uplink_rate": str(round(provider["up_link"]
-                                                               * 8 / 1048576, 4)), "provider_name": provider["provider"]})
+                                                               * 8 / 1048576, 4)),
+                              "provider_name": provider["provider"]})
 
         data.append(provider_data)
 
@@ -251,9 +252,10 @@ def show_cloud_parameters():
     all_avilable_space = 0
     for item in data:
         log_to_console("{:<30} {:<10} {:<17} {:<15}\n".format(
-            item["email"], item["provider_name"], item["average_uplink_rate"] + " Mbit/s", item["available_space"] + " GB"))
+            item["email"], item["provider_name"], item["average_uplink_rate"] + " Mbit/s",
+                                                  item["available_space"] + " GB"))
         all_avilable_space += float(item["available_space"])
-    log_to_console("AVILABLE SPACE: {} GB\n".format(all_avilable_space))
+    log_to_console("AVAILABLE SPACE: {} GB\n".format(all_avilable_space))
 
 
 class HiddenPrints:
