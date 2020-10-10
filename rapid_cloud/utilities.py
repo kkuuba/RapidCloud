@@ -1,6 +1,6 @@
 from rapid_cloud.google_drive.gdrive import GoogleDriveInterface
 from rapid_cloud.mega_drive.mdrive import MegaCloudInterface
-from rapid_cloud.configuration_handler import *
+from rapid_cloud.configuration_handler import ConfigurationHandler, log_to_file, log_to_console, setup_log_file, create_directory
 from getpass import getpass, getuser
 from zipfile import ZipFile
 from os.path import basename
@@ -65,10 +65,7 @@ class ThroughputTest:
 
     @staticmethod
     def delete_test_files():
-        pattern = re.compile(r"{}*.".format("test"))
-        for root, dirs, files in os.walk("/tmp"):
-            for file in filter(lambda x: re.match(pattern, x), files):
-                os.remove(os.path.join(root, file))
+        os.system("rm -rf /tmp/test*")
 
     def up_link_sub_test(self, sub_test_id, tp=14):
         subtest_start = time.time()
@@ -185,6 +182,7 @@ def prepare_all_accounts():
         setup_log_file()
         setup_password()
         while True:
+            log_to_console("----SETTING UP YOUR CLOUD STORAGE ACCOUNTS----")
             log_to_console("Please enter cloud provider name [google, megacloud]:")
             provider = str(input())
             if provider == "google":
@@ -221,8 +219,13 @@ def setup_password():
 
 
 def reset_configuration():
-    shutil.rmtree("/home/{}/.config/rapid_cloud_data".format(user_name))
-    log_to_console("Configuration was successfully removed")
+    log_to_console("This action delete all accounts configuration. Are you sure to continue? [yes/no]")
+    confirmation = str(input())
+    if confirmation == "yes":
+        shutil.rmtree("/home/{}/.config/rapid_cloud_data".format(user_name))
+        log_to_console("Configuration was successfully removed")
+    else:
+        log_to_console("Exiting ...")       
 
 
 def show_cloud_files():
