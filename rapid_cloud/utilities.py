@@ -172,7 +172,7 @@ def set_default_configuration_scheme():
             file.close()
         with open("/home/{}/.config/rapid_cloud_data/google_drive/client_secrets.json".format(user_name), "w+") as file:
             file.write(
-                """PLACE HERE CONTENT OF YOUR CLIENT_SECRET.JSON FILE OR USE .WHL FILE TO INSTALL"""
+                """PLACE HERE CONTENT OF YOUR CLIENT_SECRET.JSON FILE OR USE .WHL FILE TO INSTALL APP"""
             )
             file.close()
     except FileExistsError:
