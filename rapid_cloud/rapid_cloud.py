@@ -16,7 +16,7 @@ class RapidCloudTaskHandler(ConfigurationHandler):
     def __init__(self, path_to_task_object):
         super().__init__()
         self.file_operation = SplitAndCombineFiles()
-        self.encryption_key = self.get_rapid_cloud_password()
+        self.encryption_key = hashlib.sha3_256(self.get_rapid_cloud_password().encode("utf-8")).hexdigest()
         self.file_encryption = FileEncryption(path_to_task_object, self.encryption_key)
         self.path = path_to_task_object
         self.start = str(time.time())
@@ -140,17 +140,17 @@ class RapidCloudTaskHandler(ConfigurationHandler):
 def main():
     try:
         parser = argparse.ArgumentParser(
-            description='Export or import file to or from multiple cloud storage providers')
+            description='Manage distributed file transfers to or from multiple cloud storage accounts using AES-256 fragments encryption')
         parser.add_argument('filename', nargs='?', default="none",
-                            help="Provide the File that needs to be exported or imported")
+                            help="provide the file to exort or .rp file trace to import data from cloud storage")
         parser.add_argument('-r', '--reset_configuration', action='store_true',
-                            help="Wipe out actual accounts configuration")
-        parser.add_argument('-S', '--show_cloud_files', action='store_true',
-                            help="Show all files exported to cloud")
+                            help="wipe out all actual accounts configuration")
+        parser.add_argument('-f', '--show_cloud_files', action='store_true',
+                            help="show all files exported from this machine to cloud storage")
         parser.add_argument('-p', '--show_cloud_parameters', action='store_true',
-                            help="Show all cloud providers parameters")
+                            help="show all cloud storage accounts parameters")
         parser.add_argument('-t', '--test_network_performance', action='store_true',
-                            help="Check up-link speed of all cloud providers")
+                            help="check up-link speed of all cloud storage accounts")
         prepare_all_accounts()
         args = parser.parse_args()
         is_valid_file = os.path.exists(args.filename)
