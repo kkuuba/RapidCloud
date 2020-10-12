@@ -91,6 +91,7 @@ class RapidCloudTaskHandler(ConfigurationHandler):
                                                                             original_file_name.split(".")[0]), "w")
         back_up_trace_file.write(json.dumps(self.file_trace))
         back_up_trace_file.close()
+        log_to_console("File trace {}.rp created".format(original_file_name))
 
     def import_file_from_cloud(self):
         log_to_console("Preparing for import from cloud ...")
@@ -122,6 +123,8 @@ class RapidCloudTaskHandler(ConfigurationHandler):
         log_to_file(divide_data_scheme)
         for provider in divide_data_scheme:
             for fragment_id in divide_data_scheme[provider]:
+                if "mega_authorization" in providers_data["cloud_providers"][int(provider) - 1]:
+                    del providers_data["cloud_providers"][int(provider) - 1]["mega_authorization"]
                 self.file_trace.update({
                     "{}-{}.ros".format(new_filename, fragment_id): providers_data["cloud_providers"][int(provider) - 1]
                 })
