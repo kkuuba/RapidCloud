@@ -58,7 +58,7 @@ class RapidCloudTaskHandler(ConfigurationHandler):
                 UnitDataTransferTask(None, provider["account_id"], provider["provider"]).get_provider_information()[
                     "available_space"]
             if len(divide_data_scheme[str(provider["account_id"])]) * frag_size_in_gb > float(avilable_space):
-                raise NoAvilableSpaceError
+                raise NoAvailableSpaceError
             else:
                 pass
 
@@ -156,8 +156,8 @@ def main():
                             help="show all cloud storage accounts parameters")
         parser.add_argument('-t', '--test_network_performance', action='store_true',
                             help="check up-link speed of all cloud storage accounts")
-        prepare_all_accounts()
         args = parser.parse_args()
+        prepare_all_accounts()
         is_valid_file = os.path.exists(args.filename)
         if args.filename.split(".")[-1] == "rp" and is_valid_file:
             transfer_obj = RapidCloudTaskHandler(args.filename)
@@ -177,10 +177,12 @@ def main():
             log_to_console("No proper file provided")
     except KeyboardInterrupt:
         log_to_console("Execution interrupted\n")
-        exit()
+    except Exception as e:
+        log_to_console("Unknown error occurred, consider configuration reset")
+        log_to_console("System error trace: {}".format(e))
 
 
-class NoAvilableSpaceError(Exception):
+class NoAvailableSpaceError(Exception):
     """Base class for exceptions in this module."""
     pass
 

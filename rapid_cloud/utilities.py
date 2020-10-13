@@ -181,22 +181,26 @@ def prepare_all_accounts():
         set_default_configuration_scheme()
         setup_log_file()
         setup_password()
-        while True:
-            log_to_console("----SETTING UP YOUR CLOUD STORAGE ACCOUNTS----")
-            log_to_console("Please enter cloud provider name [google, megacloud]:")
-            provider = str(input())
-            if provider == "google":
-                GoogleDriveInterface()
-            elif provider == "megacloud":
-                MegaCloudInterface()
-            else:
-                log_to_console("Unknown provider\n")
-                continue
-            log_to_console("Do you want to add another account? [yes/no]")
-            end_preparation = str(input()) == "no"
-            if end_preparation:
-                break
-        check_performance()
+        try:
+            while True:
+                log_to_console("----SETTING UP YOUR CLOUD STORAGE ACCOUNTS----")
+                log_to_console("Please enter cloud provider name [google, megacloud]:")
+                provider = str(input())
+                if provider == "google":
+                    GoogleDriveInterface()
+                elif provider == "megacloud":
+                    MegaCloudInterface()
+                else:
+                    log_to_console("Unknown provider\n")
+                    continue
+                log_to_console("Do you want to add another account? [yes/no]")
+                end_preparation = str(input()) == "no"
+                if end_preparation:
+                    break
+            check_performance()
+        except Exception as e:
+            reset_configuration()
+            log_to_console(e)
     else:
         setup_log_file()
 
@@ -253,7 +257,7 @@ def show_cloud_parameters():
     for item in data:
         log_to_console("{:<30} {:<10} {:<17} {:<15}\n".format(
             item["email"], item["provider_name"], item["average_uplink_rate"] + " Mbit/s",
-            item["available_space"] + " GB"))
+                                                  item["available_space"] + " GB"))
         all_avilable_space += float(item["available_space"])
     log_to_console("AVAILABLE SPACE: {} GB\n".format(all_avilable_space))
 
