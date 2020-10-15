@@ -51,11 +51,11 @@ setup(
     author_email='jakub.kupiec.k1@gmail.com',
     packages=get_packages('rapid_cloud'),
     package_data=get_package_data('rapid_cloud'),
-    install_requires=["setuptools",
-                      "PyDrive",
-                      "pyAesCrypt",
-                      "mega.py",
-                      "file_split_merge"],
+    install_requires=["setuptools==50.3.1",
+                      "PyDrive==1.3.1",
+                      "pyAesCrypt==0.4.3",
+                      "mega.py==1.0.8",
+                      "file_split_merge==1.0.0"],
     entry_points={
         'console_scripts': ['rapid_cloud='
                             'rapid_cloud:main'],
