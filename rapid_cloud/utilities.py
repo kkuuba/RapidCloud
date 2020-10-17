@@ -257,7 +257,7 @@ def show_cloud_parameters():
     for item in data:
         log_to_console("{:<30} {:<10} {:<17} {:<15}\n".format(
             item["email"], item["provider_name"], item["average_uplink_rate"] + " Mbit/s",
-                                                  item["available_space"] + " GB"))
+            item["available_space"] + " GB"))
         all_avilable_space += float(item["available_space"])
     log_to_console("AVAILABLE SPACE: {} GB\n".format(all_avilable_space))
 

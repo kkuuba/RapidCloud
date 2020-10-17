@@ -79,7 +79,7 @@ class RapidCloudTaskHandler(ConfigurationHandler):
             self.file_operation.split("/tmp/{}".format(new_name), number_of_fragments)
             self.upload_all_fragments(new_name, divide_scheme)
         TerminalInterface(self.tasks).show_ongoing_tasks("upload", number_of_fragments)
-        self.delete_temp_files()
+        self.delete_temp_files(new_name)
         self.create_original_file_trace(file_name)
 
     def create_original_file_trace(self, original_file_name):
@@ -91,7 +91,7 @@ class RapidCloudTaskHandler(ConfigurationHandler):
                                                                             original_file_name.split(".")[0]), "w")
         back_up_trace_file.write(json.dumps(self.file_trace))
         back_up_trace_file.close()
-        log_to_console("File trace {}.rp created".format(original_file_name))
+        log_to_console("File trace {}.rp created".format(original_file_name.split(".")[0]))
 
     def import_file_from_cloud(self):
         log_to_console("Preparing for import from cloud ...")
@@ -111,7 +111,8 @@ class RapidCloudTaskHandler(ConfigurationHandler):
             self.file_operation.merge("/tmp/{}.zip".format(keys_list[-1]).split("-")[0])
             self.file_encryption = FileEncryption(hash_name, self.encryption_key)
             self.file_encryption.prepare_file_after_import()
-            self.delete_temp_files()
+        self.delete_temp_files(hash_name)
+        log_to_console("File imported with success")
 
     def upload_all_fragments(self, new_filename, divide_data_scheme):
         providers_data = self.get_data_from_json()
@@ -136,9 +137,11 @@ class RapidCloudTaskHandler(ConfigurationHandler):
                 self.threads[-1].start()
 
     @staticmethod
-    def delete_temp_files():
+    def delete_temp_files(hash_name):
         os.system("rm -rf /tmp/*zip")
         os.system("rm -rf /tmp/*ros")
+        os.system("rm -rf /tmp/*aes")
+        os.system("rm -rf /tmp/{}*".format(hash_name))
 
 
 def main():

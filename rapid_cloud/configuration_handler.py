@@ -71,9 +71,9 @@ class ConfigurationHandler:
             if account["account_id"] == self.account_id:
                 return account["mega_authorization"]["email"], account["mega_authorization"]["password"]
         else:
-            log_to_file("Enter email to your Mega account:")
+            log_to_console("Enter email to your Mega account:")
             email = input()
-            log_to_file("Enter password to your Mega account:")
+            log_to_console("Enter password to your Mega account:")
             password = getpass()
             data = self.get_data_from_json()
             if data["cloud_providers"]:
@@ -89,7 +89,7 @@ class ConfigurationHandler:
                 }}
             data["cloud_providers"].append(account_info)
             self.put_data_in_json(data)
-            log_to_file("Added new account")
+            log_to_console("Added new account")
             return email, password
 
 

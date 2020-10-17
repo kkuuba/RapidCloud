@@ -7,14 +7,17 @@ marker file with .rp extension is created. It can be used to download back expor
 
 ## Installation
 
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install RapidCloud with .whl file.
+Use the package manager [pip](https://pip.pypa.io/en/stable/) to install RapidCloud with .whl file:
 
 ```bash
 git clone https://github.com/kkuuba/RapidCloud.git
 cd RapidCloud
 sudo pip3 install builds/rapid_cloud-1.0.0-py2.py3-none-any.whl
 ```
-
+In case of problems with installation using [pip](https://pip.pypa.io/en/stable/):
+```bash
+sudo pip3 install --ignore-installed builds/rapid_cloud-1.0.0-py2.py3-none-any.whl
+```
 ## Usage
 
 ```bash
