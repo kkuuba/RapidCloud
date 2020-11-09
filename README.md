@@ -1,6 +1,6 @@
 # RapidCloud
 
-Terminal app for safe and efficient file transfers using multiple cloud storage accounts.
+Bash tool for safe and efficient file transfers using multiple cloud storage accounts.
 Recently Google Drive and MEGA Drive are supported (multiple accounts of same provider can be configured).
 All files are encrypted with AES-256 and distributed over configured accounts. After successful upload of file special
 marker file with .rp extension is created. It can be used to download back exported file. 
