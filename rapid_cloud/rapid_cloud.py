@@ -54,10 +54,10 @@ class RapidCloudTaskHandler(ConfigurationHandler):
             next_frag_id = next_frag_id + assigned_fragments
 
         for provider in providers_data:
-            avilable_space = \
+            available_space = \
                 UnitDataTransferTask(None, provider["account_id"], provider["provider"]).get_provider_information()[
                     "available_space"]
-            if len(divide_data_scheme[str(provider["account_id"])]) * frag_size_in_gb > float(avilable_space):
+            if len(divide_data_scheme[str(provider["account_id"])]) * frag_size_in_gb > float(available_space):
                 raise NoAvailableSpaceError
             else:
                 pass

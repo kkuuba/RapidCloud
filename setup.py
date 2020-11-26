@@ -45,7 +45,7 @@ setup(
     version=version,
     url='http://github.com/kkuuba/RapidCloud/',
     license='BSD',
-    description='Commandline scripts to split or merge files',
+    description='Commandline tool for exporting files to cloud storage',
     long_description_content_type='text/markdown',
     author='Jakub Kupiec',
     author_email='jakub.kupiec.k1@gmail.com',
