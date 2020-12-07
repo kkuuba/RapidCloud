@@ -2,7 +2,7 @@ from file_split_merge import SplitAndCombineFiles
 from rapid_cloud.terminal_interface import TerminalInterface
 from rapid_cloud.utilities import UnitDataTransferTask, ConfigurationHandler, FileEncryption, log_to_console, \
     log_to_file, HiddenPrints, prepare_all_accounts, user_name, check_performance, show_cloud_parameters, \
-    reset_configuration, show_cloud_files
+    reset_configuration, show_cloud_files, import_user_configuration
 import argparse
 import threading
 import hashlib
@@ -136,6 +136,11 @@ class RapidCloudTaskHandler(ConfigurationHandler):
                 self.threads[-1].daemon = True
                 self.threads[-1].start()
 
+    def export_user_configuration(self):
+        FileEncryption(file_name=None, password=self.get_rapid_cloud_password()).export_configuration()
+        self.delete_temp_files("configuration")
+        log_to_console("Configuration exported with success")
+
     @staticmethod
     def delete_temp_files(hash_name):
         os.system("rm -rf /tmp/*zip")
@@ -159,8 +164,15 @@ def main():
                             help="show all cloud storage accounts parameters")
         parser.add_argument('-t', '--test_network_performance', action='store_true',
                             help="check up-link speed of all cloud storage accounts")
+        parser.add_argument('-e', '--export_user_configuration', action='store_true',
+                            help="export user configuration to .rpconf file")
+        parser.add_argument('-i', '--import_user_configuration', action='store_true',
+                            help="import user configuration from .rpconf file")
         args = parser.parse_args()
-        prepare_all_accounts()
+        if args.import_user_configuration:
+            import_user_configuration()
+        else:
+            prepare_all_accounts()
         is_valid_file = os.path.exists(args.filename)
         if args.filename.split(".")[-1] == "rp" and is_valid_file:
             transfer_obj = RapidCloudTaskHandler(args.filename)
@@ -176,6 +188,9 @@ def main():
             show_cloud_parameters()
         elif args.test_network_performance:
             check_performance()
+        elif args.export_user_configuration:
+            transfer_obj = RapidCloudTaskHandler(args.filename)
+            transfer_obj.export_user_configuration()
         else:
             log_to_console("No proper file provided")
     except KeyboardInterrupt:

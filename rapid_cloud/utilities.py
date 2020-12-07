@@ -120,6 +120,18 @@ class FileEncryption:
         self.unzip_file()
         self.decryption()
 
+    def export_configuration(self):
+        shutil.make_archive("/tmp/configuration",
+                            "zip",
+                            "/home/{}/.config/rapid_cloud_data".format(user_name))
+        self.ciphering.encryptFile("/tmp/configuration.zip", "configuration.rpconf", self.password, self.buffer_size)
+
+    def import_configuration(self):
+        self.ciphering.decryptFile(self.file_name, "/tmp/{}".format(self.file_name.replace("rpconf", "zip")),
+                                   self.password, self.buffer_size)
+        shutil.unpack_archive("/tmp/{}".format(self.file_name.replace("rpconf", "zip")),
+                              "/home/{}/.config/rapid_cloud_data".format(user_name))
+
 
 def check_provider_performance(provider_id, n=3):
     account_config = ConfigurationHandler(provider_id)
@@ -143,6 +155,19 @@ def check_performance():
     for account in info["cloud_providers"]:
         log_to_console("Uplink test of provider {} ongoing ...".format(account["account_id"]))
         check_provider_performance(account["account_id"])
+
+
+def import_user_configuration():
+    reset_configuration()
+    path_to_cfg_file = str(input("Enter path to configuration file: "))
+    if path_to_cfg_file.split(".")[-1] == "rpconf":
+        log_to_console("Enter the configuration password:")
+        FileEncryption(path_to_cfg_file, str(getpass())).import_configuration()
+        os.system("rm -rf /tmp/*zip")
+        log_to_console("Importing configuration finished with success")
+        exit()
+    else:
+        log_to_console("Incorrect configuration file format")
 
 
 def check_if_providers_defined():
@@ -226,8 +251,11 @@ def reset_configuration():
     log_to_console("This action delete all accounts configuration. Are you sure to continue? [yes/no]")
     confirmation = str(input())
     if confirmation == "yes":
-        shutil.rmtree("/home/{}/.config/rapid_cloud_data".format(user_name))
-        log_to_console("Configuration was successfully removed")
+        try:
+            shutil.rmtree("/home/{}/.config/rapid_cloud_data".format(user_name))
+            log_to_console("Configuration was successfully removed")
+        except OSError:
+            pass
     else:
         log_to_console("Exiting ...")
 
@@ -257,7 +285,7 @@ def show_cloud_parameters():
     for item in data:
         log_to_console("{:<30} {:<10} {:<17} {:<15}\n".format(
             item["email"], item["provider_name"], item["average_uplink_rate"] + " Mbit/s",
-            item["available_space"] + " GB"))
+                                                  item["available_space"] + " GB"))
         all_avilable_space += float(item["available_space"])
     log_to_console("AVAILABLE SPACE: {} GB\n".format(all_avilable_space))
 
