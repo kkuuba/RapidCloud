@@ -280,7 +280,7 @@ def show_cloud_parameters():
 
         data.append(provider_data)
 
-    log_to_console("{:<30} {:<10} {:<17} {:<15}\n".format('EMAIL', 'PROVIDER', 'UPLINK', 'AVILABLE SPACE'))
+    log_to_console("{:<30} {:<10} {:<17} {:<15}\n".format('EMAIL', 'PROVIDER', 'UPLINK', 'AVAILABLE SPACE'))
     all_avilable_space = 0
     for item in data:
         log_to_console("{:<30} {:<10} {:<17} {:<15}\n".format(

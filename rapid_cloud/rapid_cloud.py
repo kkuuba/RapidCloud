@@ -74,7 +74,6 @@ class RapidCloudTaskHandler(ConfigurationHandler):
             self.file_encryption.prepare_file_to_export()
             new_name = self.generate_fragment_hash_string()
             os.popen("mv /tmp/{} /tmp/{}".format("{}.zip".format(file_name.split(".")[0]), new_name))
-            time.sleep(3)
             divide_scheme, number_of_fragments = self.get_proper_file_divide_scheme()
             self.file_operation.split("/tmp/{}".format(new_name), number_of_fragments)
             self.upload_all_fragments(new_name, divide_scheme)
@@ -155,7 +154,7 @@ def main():
             description='Manage distributed file transfers to or from multiple cloud storage'
                         ' accounts using AES-256 fragments encryption')
         parser.add_argument('filename', nargs='?', default="none",
-                            help="provide the file to exort or .rp file trace to import data from cloud storage")
+                            help="provide the file to export or .rp file trace to import data from cloud storage")
         parser.add_argument('-r', '--reset_configuration', action='store_true',
                             help="wipe out all actual accounts configuration")
         parser.add_argument('-f', '--show_cloud_files', action='store_true',
