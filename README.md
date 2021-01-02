@@ -11,12 +11,11 @@ Use the package manager [pip](https://pip.pypa.io/en/stable/) to install RapidCl
 
 ```bash
 git clone https://github.com/kkuuba/RapidCloud.git
-cd RapidCloud
-sudo pip3 install builds/rapid_cloud-1.0.0-py2.py3-none-any.whl
+sudo dpkg -i RapidCloud/builds/python3-rapid-cloud_1.0.0-1_all.deb
 ```
-In case of problems with installation using [pip](https://pip.pypa.io/en/stable/):
+First execution and accounts configuration:
 ```bash
-sudo pip3 install --ignore-installed builds/rapid_cloud-1.0.0-py2.py3-none-any.whl
+rapid_cloud -p
 ```
 ## Usage
 
