@@ -7,7 +7,7 @@ marker with .rp extension is created. It can be used to download back exported f
 
 ## Installation
 
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install RapidCloud with .whl file:
+Use the dpkg manager to install application with ".deb" file:
 
 ```bash
 git clone https://github.com/kkuuba/RapidCloud.git
@@ -21,12 +21,12 @@ rapid_cloud -p
 
 ```bash
 user@PC:~$ rapid_cloud -h
-usage: rapid_cloud [-h] [-r] [-f] [-p] [-t] [filename]
+usage: rapid_cloud [-h] [-r] [-f] [-p] [-t] [-e] [-i] [filename]
 
 Manage distributed file transfers to or from multiple cloud storage accounts using AES-256 fragments encryption
 
 positional arguments:
-  filename              provide the file to exort or .rp file trace to import data from cloud storage
+  filename              provide the file to export or .rp file trace to import data from cloud storage
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -38,4 +38,8 @@ optional arguments:
                         show all cloud storage accounts parameters
   -t, --test_network_performance
                         check up-link speed of all cloud storage accounts
+  -e, --export_user_configuration
+                        export user configuration to .rpconf file
+  -i, --import_user_configuration
+                        import user configuration from .rpconf file
 ```
