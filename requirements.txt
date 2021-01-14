@@ -1,0 +1,5 @@
+file_split_merge
+mega.py
+pyAesCrypt
+PyDrive
+setuptools

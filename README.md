@@ -11,7 +11,9 @@ Use the dpkg manager to install application with ".deb" file:
 
 ```bash
 git clone https://github.com/kkuuba/RapidCloud.git
-sudo dpkg -i RapidCloud/builds/python3-rapid-cloud_1.0.0-1_all.deb
+cd RapidCloud
+sudo chmod +x install.sh
+./install.sh
 ```
 First execution and accounts configuration:
 ```bash
